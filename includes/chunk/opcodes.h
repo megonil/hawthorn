@@ -2,9 +2,9 @@
 #define haw_bytecode
 #include <stdint.h>
 
-enum OpCode : uint8_t
+typedef enum : uint8_t
 {
-
-};
+	RETURN
+} OpCode;
 
 #endif // !haw_bytecode

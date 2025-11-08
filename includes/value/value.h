@@ -1,0 +1,42 @@
+#ifndef haw_value_h
+#define haw_value_h
+
+#include <type/type.h>
+
+typedef union
+{
+	// gcobject in bright future...
+	// function...
+	void*	   user_;	// userdata
+	haw_int	   int_;	// integer
+	haw_number number_; // float/double
+} Value;
+
+#define TValueFields                                                                               \
+	Value	 value_;                                                                               \
+	HawTypes type_tag_;
+
+// tagged values like in lua
+typedef struct
+{
+	TValueFields
+} TValue;
+
+#define HAW_WARIANT_INT (HAW_TNUMBER | (0 << 4))
+#define HAW_WARIANT_FLOAT (HAW_TNUMBER | (1 << 4))
+
+#define val_(o) ((o)->value_)
+#define valraw(o) (val_(o))
+
+#define novariant(t) ((t) & 0x0F)
+#define withvariant(t) ((t) & 0x3F)
+
+#define rawtt(o) ((o)->type_tag_)
+#define ttypetag(o) withvariant(rawtt(o))
+#define ttype(o) (novariant(rawtt(o)))
+
+// test your types
+#define checktag(o, t) (rawtt(o) == (t))
+#define checktype(o, t) (ttype(o) == (t))
+#
+#endif //! haw_value_h
