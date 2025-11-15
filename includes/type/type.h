@@ -20,6 +20,12 @@ typedef enum
 typedef unsigned char hawu_byte;
 typedef signed char	  haws_byte;
 typedef int			  haw_int;
-typedef float		  haw_number;
+typedef double		  haw_number;
+
+#define cast(T, v) ((T) v)
+#define cast_hawint(V) cast(haw_int, (V))
+#define cast_hawnumber(V) cast(haw_number, (V))
+#define cast_hawubyte(V) cast(hawu_byte, (V))
+#define cast_hawsbyte(V) cast(haws_byte, (V))
 
 #endif // !haw_type_h

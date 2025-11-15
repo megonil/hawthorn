@@ -2,7 +2,7 @@
 #include <share/error.h>
 #include <stdlib.h>
 
-Module module = {.name = "vector"};
+#define MODULE_NAME "megonil_array"
 
 void* array_init(size_t item_size, size_t capacity)
 {
@@ -64,7 +64,7 @@ void array_pop_back(void* array)
 	}
 }
 
-void array_free(void* array)
+inline void array_free(void* array)
 {
 	free(array_header(array));
 }

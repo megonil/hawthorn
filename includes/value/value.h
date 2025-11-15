@@ -3,23 +3,25 @@
 
 #include <type/type.h>
 
+// values of all types are first-class values: we can store them
+// in global variables, local variables and table fields, pass them as arguments to
+// functions, return them from functions, etc.
+// strings like userdata and gcobject will stored as a reference
 typedef union
 {
 	// gcobject in bright future...
 	// function...
-	void*	   user_;	// userdata
+	void* user_; // userdata are essentially pointers to user memory blocks, and come in 2 flavors:
+				 // heavy(allocated by haw), light(allocated and freed by the user)
 	haw_int	   int_;	// integer
 	haw_number number_; // float/double
 } Value;
 
-#define TValueFields                                                                               \
-	Value	 value_;                                                                               \
-	HawTypes type_tag_;
-
 // tagged values like in lua
 typedef struct
 {
-	TValueFields
+	Value	 value_;
+	HawTypes type_tag_;
 } TValue;
 
 #define HAW_WARIANT_INT (HAW_TNUMBER | (0 << 4))
@@ -38,5 +40,7 @@ typedef struct
 // test your types
 #define checktag(o, t) (rawtt(o) == (t))
 #define checktype(o, t) (ttype(o) == (t))
-#
+
+#define cast_value(val) ((Value) val)
+
 #endif //! haw_value_h

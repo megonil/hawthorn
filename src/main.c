@@ -1,14 +1,19 @@
-#include <share/array.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "interpreter/repl.h"
+#include "lexer/lexer.h"
 
 int main(int argc, char* argv[])
 {
-	int* array = array(int);
-	array_push(array, 10);
+	if (argc == 1)
+	{
+		repl_cycle();
+	}
+	else if (argc == 2)
+	{
+		SynLexState sl;
+		str			source_name = make_str(argv[1]);
+		synlex_init(&sl, &source_name);
+		synlex_lex(&sl);
+	}
 
-	printf("%zu\n", array_size(array));
-
-	array_free(array);
 	return 0;
 }

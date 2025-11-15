@@ -46,6 +46,7 @@ target_link_libraries(
   hawthorn
   PRIVATE megonil_error
           megonil_array
+          megonil_string
           hawthorn_lexer
           hawthorn_parser
           hawthorn_compiler

@@ -18,4 +18,27 @@ typedef enum
 	THREAD_ERRERR
 } ThreadStatus;
 
+#if !defined(HAWI_FUNC)
+#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) &&                             \
+	(defined(__ELF__) || defined(__MACH__))
+#define HAWI_FUNC __attribute__((visibility("internal"))) extern
+#else
+#define HAWI_FUNC extern
+#endif
+
+#define INT_BITS 32
+
 #endif // !hawthorn_h
+#if !defined(noret)
+
+#if defined(__GNUC__)
+#define noret void __attribute__((noreturn))
+#elif defined(_MSC_VER) && _MSC_VER >= 1200
+#define noret void __declspec(noreturn)
+#else
+#define noret void
+#endif
+
+#endif
+
+#endif

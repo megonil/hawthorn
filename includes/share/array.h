@@ -2,6 +2,7 @@
 #define megonil_vector
 
 #include "common.h"
+#include "signal.h"
 
 #define ARRAY_INITIAL_CAPACITY 8
 #define ARRAY_GROW_COEFF 2
@@ -21,14 +22,14 @@ typedef struct
 // vector.at c++ analog (with bound checking)
 // also array_get wrapper
 #define array_at(ARR, INDEX, T)                                                                    \
-	(index >= 0 && index < array_size(ARR) ? (T*) ARR[INDEX] : raise(SIGTRAP))
+	((INDEX) >= 0 && (INDEX) < array_size(ARR) ? (T) ARR[(INDEX)] : raise(SIGTRAP))
 
 #define array_size(ARR) (array_header(ARR)->size)
 #define array_capacity(ARR) (array_header(ARR)->capacity)
 
 #define array_empty(ARR) array_size((ARR)) == 0
 
-#define array_pop(ARR) ()
+#define array_pop(ARR, T) (T*) ARR[array_header(ARR)->size--]
 
 #define array_push(ARR, VALUE)                                                                     \
 	ARR							   = array_ensure_capacity(ARR, 1, sizeof(VALUE));                 \
