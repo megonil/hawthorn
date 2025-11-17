@@ -51,4 +51,7 @@ typedef struct
 #define int_value(o) val_(o).int_
 #define number_value(o) val_(o).number_
 
+#define setivalue(o, v) int_value(o) = v;
+#define setnvalue(o, v) number_value(o) = v;
+
 #endif //! haw_value_h

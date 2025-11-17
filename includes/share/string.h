@@ -18,14 +18,14 @@ typedef unsigned char*		 ucstr_mut;
 
 typedef struct
 {
-	str_size   length;
-	base_char* value;
+	str_size	   length;
+	base_char_mut* value;
 } str;
 
 #define this str* string
 #define this_t str
 
-str make_str(cstr c_string);
+str make_str(cstr_mut c_string);
 
 #define STR_EQ 1  // result value when strings are equal
 #define STR_NEQ 0 // result value when string are not equal
@@ -48,6 +48,7 @@ void   String_init(String* string);
 void   String_append(String* string, cstr append_str);
 void   String_appendc(String* string, char c);
 void   String_destroy(String* string);
+void   String_clear(String* string);
 
 #define String_eq(str1, str2) (strcmp(str1->value, str2->value) == 0)
 

@@ -26,7 +26,7 @@ int8_t str_eq(str* string, const str* other_str)
 	return STR_EQ;
 }
 
-str make_str(cstr c_string)
+str make_str(cstr_mut c_string)
 {
 	str_size   length = strlen(c_string);
 	base_char* value  = c_string;
@@ -55,7 +55,7 @@ void String_init(String* string)
 {
 	string->length	 = 0;
 	string->capacity = CAP_INITIAL;
-	string->value	 = NULL;
+	string->value	 = (base_char_mut*) malloc(string->capacity);
 }
 
 void String_append(String* string, cstr append_str)
@@ -84,10 +84,14 @@ void String_append(String* string, cstr append_str)
 
 void String_appendc(String* string, char c)
 {
-	if (string->length + 1 >= string->capacity)
+	if (string->length >= string->capacity)
 	{
 		string->capacity *= CAP_MULTIPLIER;
 		string->value = realloc(string->value, string->capacity);
+	}
+
+	if (string->length <= string->capacity - 1)
+	{
 	}
 
 	string->value[string->length++] = c;
@@ -100,4 +104,13 @@ void String_destroy(String* string)
 
 	free(string->value);
 	string->value = NULL;
+}
+
+void String_clear(String* string)
+{
+	string->length = 0;
+	if (string->value)
+	{
+		string->value[0] = '\0';
+	}
 }

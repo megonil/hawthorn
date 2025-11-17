@@ -21,6 +21,7 @@ typedef unsigned char hawu_byte;
 typedef signed char	  haws_byte;
 typedef int			  haw_int;
 typedef double		  haw_number;
+typedef unsigned int  haw_unsigned;
 
 #define cast(T, v) ((T) v)
 #define cast_hawint(V) cast(haw_int, (V))

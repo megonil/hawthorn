@@ -6,7 +6,7 @@
 #include <share/hawthorn.h>
 #include <share/util.h>
 
-cstr get_contents_of_file(cstr file_name);
+cstr_mut get_contents_of_file(cstr file_name);
 
 typedef int lexer_char;
 
@@ -29,6 +29,9 @@ typedef struct
 	size_t pos;
 } SynLexState;
 
+// specify to print or not token which is currently being processed
+#define SLS_DEBUGL 1
+
 #define this SynLexState* sls
 
 HAWI_FUNC void	synlex_init(this, str* source_name);
@@ -40,5 +43,11 @@ HAWI_FUNC cstr	synlex_tokentostr(this, TokenType token);
 
 lexer_char synlex_lex(this, SemInfo* seminfo);
 void	   synlex_destroy(this);
+
+#if SLS_DEBUGL
+
+void synlex_dislex(lexer_char token);
+
+#endif
 
 #endif // !haw_lexer

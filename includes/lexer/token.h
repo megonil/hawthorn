@@ -26,8 +26,6 @@ typedef enum : uint16_t
 	TK_LOCAL,
 	TK_GLOBAL,
 
-	TK_VOID,
-
 	// cycles
 	TK_DO,
 	TK_WHILE,
@@ -39,13 +37,17 @@ typedef enum : uint16_t
 	TK_NOTEQ, // !=
 	TK_EQ,	  // ==
 	TK_LE,
+	TK_GE,
 	TK_IDIV,
 
 	// literals
 	TK_BOOL,
 	TK_INT,
 	TK_NUMBER,
-	TK_STRING
+	TK_STRING,
+	TK_VOID,
+
+	TK_NAME,
 } TokenType;
 
 typedef union
@@ -69,22 +71,35 @@ typedef struct
 	lexer_size column;
 } position;
 
+#define tok_pos(t) t - FIRST_RESERVED
+
 static cstr const haw_tokens[] = {
-	[TK_RETURN] = "return",	 [TK_BREAK] = "break",
+	[tok_pos(TK_RETURN)] = "return",   [tok_pos(TK_BREAK)] = "break",
 
-	[TK_ELSE] = "else",		 [TK_IF] = "if",		 [TK_FUN] = "fun",
-	[TK_PRO] = "pro",
+	[tok_pos(TK_ELSE)] = "else",	   [tok_pos(TK_IF)] = "if",
+	[tok_pos(TK_FUN)] = "fun",		   [tok_pos(TK_PRO)] = "pro",
 
-	[TK_LOCAL] = "local",	 [TK_GLOBAL] = "global",
+	[tok_pos(TK_LOCAL)] = "local",	   [tok_pos(TK_GLOBAL)] = "global",
 
-	[TK_VOID] = "void",
+	[tok_pos(TK_VOID)] = "void",
 
-	[TK_DO] = "do",			 [TK_WHILE] = "while",	 [TK_FOR] = "for",
+	[tok_pos(TK_DO)] = "do",		   [tok_pos(TK_WHILE)] = "while",
+	[tok_pos(TK_FOR)] = "for",
 
-	[TK_AND] = "and",		 [TK_OR] = "or",		 [TK_NOTEQ] = "!=",
-	[TK_EQ] = "==",			 [TK_LE] = "<=",		 [TK_IDIV] = "//",
+	[tok_pos(TK_AND)] = "and",		   [tok_pos(TK_OR)] = "or",
+	[tok_pos(TK_NOTEQ)] = "!=",		   [tok_pos(TK_EQ)] = "==",
+	[tok_pos(TK_LE)] = "<=",		   [tok_pos(TK_IDIV)] = "//",
 
-	[TK_BOOL] = "<bool>",	 [TK_INT] = "<integer>", [TK_NUMBER] = "<number>",
-	[TK_STRING] = "<string>"};
+	[tok_pos(TK_BOOL)] = "<bool>",	   [tok_pos(TK_INT)] = "<integer>",
+	[tok_pos(TK_NUMBER)] = "<number>", [tok_pos(TK_STRING)] = "<string>",
+	[tok_pos(TK_NAME)] = "<name>",	   [tok_pos(TK_GE)] = ">="};
+#define KW_GROUP(letter, body)                                                                     \
+	case letter:                                                                                   \
+	{                                                                                              \
+		body;                                                                                      \
+		break;                                                                                     \
+	}
+#define KW(keyword, token)                                                                         \
+	if (strcmp(s, keyword) == 0) return token;
 
 #endif // !haw_token
