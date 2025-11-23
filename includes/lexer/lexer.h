@@ -1,12 +1,11 @@
 #ifndef haw_lexer
 #define haw_lexer
 
+#include "share/string.h"
 #include "token.h"
 
 #include <share/hawthorn.h>
 #include <share/util.h>
-
-cstr_mut get_contents_of_file(cstr file_name);
 
 typedef int lexer_char;
 
@@ -14,19 +13,19 @@ typedef int lexer_char;
 typedef struct
 {
 	// LEXER
-	str		   file_contents;
+	Buffer	   file_contents;
 	lexer_char current;
 	lexer_char look_ahead;
 	lexer_size line_number;
 	String	   buffer;
 
 	// PARSER
-	Token current_token;	// current token
-	Token look_ahead_token; // next token
+	Token  current_token;	 // current token
+	Token  look_ahead_token; // next token
+	size_t pos;
 
 	// BOTH
-	str*   source_name;
-	size_t pos;
+	str* source_name;
 } SynLexState;
 
 // specify to print or not token which is currently being processed

@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MODULE_NAME "lexer"
 
@@ -26,47 +27,14 @@
 
 static inline void advance(this)
 {
-	if (sls->pos + 1 < sls->file_contents.length)
+	if (sls->file_contents.n + 1 < ((((ArrayHeader*) (sls->file_contents.value) - 1)->size)))
 	{
-		sls->current = sls->file_contents.value[++sls->pos];
+		sls->current = buffer_readnext(sls->file_contents);
 	}
 	else
 	{
 		sls->current = EOF;
 	}
-}
-
-cstr_mut get_contents_of_file(cstr file_name)
-{
-	FILE* file = fopen(file_name, "rb");
-
-	if (file == NULL)
-	{
-		error("Could not open file");
-	}
-
-	fseek(file, 0L, SEEK_END);
-	size_t file_size = ftell(file);
-	rewind(file);
-
-	char* buffer = (char*) malloc(file_size + 1);
-
-	if (buffer == NULL)
-	{
-		error("Error allocating memory to file buffer");
-	}
-
-	size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
-
-	if (bytes_read < file_size)
-	{
-		errorf("Could not open file %s", file_name);
-	}
-
-	fclose(file);
-
-	buffer[file_size] = '\0';
-	return buffer;
 }
 
 static noret lex_error(this, cstr msg, TokenType token);
@@ -78,6 +46,7 @@ static lexer_char check_next1(this, lexer_char c)
 		advance(sls);
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -274,6 +243,31 @@ static int str_2num(const char* s, TValue* result)
 #undef next
 }
 
+static void read_string(this, SemInfo* seminfo)
+{
+	assert(sls->current == '"');
+	advance(sls); // "
+
+	while (sls->current != '"')
+	{
+		switch (sls->current)
+		{
+		case EOF:
+		case '\n':
+		case '\r':
+			error("Unfinished string");
+			break;
+		default:
+			save_and_next(sls);
+		}
+	}
+	advance(sls); // "
+
+	String s;
+	make_Stringl(&s, sls->buffer.value, sls->buffer.length - 1);
+	seminfo->str_ = &s;
+}
+
 static lexer_char read_numeral(this, SemInfo* seminfo)
 {
 	assert(isdigit(sls->current));
@@ -306,11 +300,12 @@ static lexer_char read_numeral(this, SemInfo* seminfo)
 
 void synlex_init(this, str* source_name)
 {
-	sls->source_name   = source_name;
-	sls->file_contents = make_str(get_contents_of_file(source_name->value));
-	sls->pos		   = 0;
-	sls->current	   = sls->file_contents.value[sls->pos];
+	sls->source_name = source_name;
 
+	buffer_init(&sls->file_contents);
+	buffer_readfile(&sls->file_contents, source_name->value);
+
+	sls->current = buffer_readnext(sls->file_contents);
 	String_init(&sls->buffer);
 }
 
@@ -402,6 +397,24 @@ lexer_char synlex_lex(this, SemInfo* seminfo)
 				return TK_NOTEQ;
 			}
 			return '!';
+		case '"':
+			read_string(sls, seminfo);
+			return TK_STRING;
+		case '\'':
+			advance(sls); // '
+
+			if (check_next1(sls, '\''))
+			{
+				error("Expected char");
+			}
+			save_and_next(sls); // save the char payload
+
+			if (!check_next1(sls, '\''))
+			{
+				error("Expected end of char");
+			}
+			advance(sls); // '
+			return TK_CHAR;
 		case '0':
 		case '1':
 		case '2':
@@ -417,7 +430,7 @@ lexer_char synlex_lex(this, SemInfo* seminfo)
 		}
 		default:
 		{
-			if (isalpha(sls->current))
+			if (isalnum(sls->current) || sls->current == '_')
 			{
 				save_and_next(sls);
 				while (isalpha(sls->current))

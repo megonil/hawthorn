@@ -45,6 +45,7 @@ typedef enum : uint16_t
 	TK_INT,
 	TK_NUMBER,
 	TK_STRING,
+	TK_CHAR,
 	TK_VOID,
 
 	TK_NAME,
@@ -54,7 +55,7 @@ typedef union
 {
 	haw_number num_;
 	haw_int	   int_;
-	str		   str_;
+	String*	   str_;
 } SemInfo;
 
 typedef struct
@@ -92,7 +93,10 @@ static cstr const haw_tokens[] = {
 
 	[tok_pos(TK_BOOL)] = "<bool>",	   [tok_pos(TK_INT)] = "<integer>",
 	[tok_pos(TK_NUMBER)] = "<number>", [tok_pos(TK_STRING)] = "<string>",
-	[tok_pos(TK_NAME)] = "<name>",	   [tok_pos(TK_GE)] = ">="};
+	[tok_pos(TK_NAME)] = "<name>",	   [tok_pos(TK_CHAR)] = "<char>",
+
+	[tok_pos(TK_GE)] = ">=",
+};
 #define KW_GROUP(letter, body)                                                                     \
 	case letter:                                                                                   \
 	{                                                                                              \

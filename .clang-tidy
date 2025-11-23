@@ -1,12 +1,8 @@
 Checks: >
   clang-analyzer-*,
   bugprone-*,
-  cert-*,
   readability-*,
   performance-*,
-  -cppcoreguidelines-*,
-  -hicpp-*,
-  -modernize-*,
 
 
 WarningsAsErrors: '*'
@@ -22,8 +18,6 @@ CheckOptions:
     value: reasonable
   - key: modernize-use-auto.MinTypeNameLength
     value: 0
-  - key: modernize-avoid-c-arrays.WarnOnAll
-    value: true
 
   # =========================
   # Readability

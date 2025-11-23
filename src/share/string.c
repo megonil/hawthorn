@@ -1,7 +1,9 @@
+#include "share/array.h"
 #include "share/error.h"
 
 #include <share/string.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,13 +34,13 @@ int8_t str_eq(str* string, const str* other_str)
 
 str make_str(cstr_mut c_string)
 {
-	str_size   length = strlen(c_string);
-	base_char* value  = c_string;
+	str_size	   length = strlen(c_string);
+	base_char_mut* value  = c_string;
 
 	return (str) {.length = length, .value = value};
 }
 
-String make_String(cstr initial_string)
+void make_String(String* s, cstr initial_string)
 {
 	str_size	   length	= strlen(initial_string);
 	base_char_mut* value	= strndup(initial_string, length);
@@ -52,7 +54,28 @@ String make_String(cstr initial_string)
 		}
 	}
 
-	return (String) {.length = length, .capacity = capacity, .value = value};
+	s->capacity = capacity;
+	s->length	= length;
+	s->value	= value;
+}
+
+void make_Stringl(String* s, cstr initial_string, str_size n)
+{
+	str_size	   length	= n;
+	str_size	   capacity = CAP_INITIAL;
+	base_char_mut* value	= strndup(initial_string, n);
+
+	if (length > capacity)
+	{
+		while (capacity <= length)
+		{
+			capacity *= CAP_MULTIPLIER;
+		}
+	}
+
+	s->capacity = capacity;
+	s->length	= length;
+	s->value	= value;
 }
 
 void String_init(String* string)
@@ -123,4 +146,38 @@ void String_clear(String* string)
 	{
 		string->value[0] = '\0';
 	}
+}
+
+void buffer_init(Buffer* buffer)
+{
+	buffer->value = array(char);
+	buffer->n	  = 0;
+}
+
+void buffer_readfile(Buffer* b, cstr filename)
+{
+	FILE* file = fopen(filename, "rb");
+
+	if (file == NULL)
+	{
+		error("Could not open file");
+	}
+
+	fseek(file, 0L, SEEK_END);
+	size_t file_size = ftell(file);
+
+	array_reserve(b->value, file_size + 1, char);
+
+	rewind(file);
+
+	size_t bytes_read = fread(b->value, sizeof(char), file_size, file);
+
+	if (bytes_read < file_size)
+	{
+		errorf("Could not open file %s", filename);
+	}
+
+	fclose(file);
+	b->value[file_size]			 = '\0';
+	array_header(b->value)->size = file_size + 1;
 }

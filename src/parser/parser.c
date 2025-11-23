@@ -27,7 +27,8 @@ void parse(str filename)
 	SynLexState sls;
 	synlex_init(&sls, &filename);
 
-	SemInfo	   dummy;
+	SemInfo dummy;
+
 	lexer_char current;
 
 	while ((current = synlex_lex(&sls, &dummy)) != EOF)

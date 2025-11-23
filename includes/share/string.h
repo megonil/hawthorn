@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
 typedef int32_t str_size;
 
@@ -43,14 +42,32 @@ typedef struct
 #define CAP_MULTIPLIER 2
 #define CAP_INITIAL 8
 
-String make_String(cstr initial_string);
-void   String_init(String* string);
-void   String_append(String* string, cstr append_str);
-void   String_appendc(String* string, char c);
-void   String_destroy(String* string);
-void   String_clear(String* string);
+void make_String(String* s, cstr initial_string);
+void make_Stringl(String* s, cstr initial_string, str_size len);
+
+void String_init(String* string);
+void String_append(String* string, cstr append_str);
+void String_appendc(String* string, char c);
+void String_destroy(String* string);
+void String_clear(String* string);
 
 #define String_eq(str1, str2) (strcmp(str1->value, str2->value) == 0)
+
+typedef struct
+{
+	int	  n;	 // idx
+	char* value; // array
+} Buffer;
+
+void buffer_init(Buffer* b);
+void buffer_readfile(Buffer* b, cstr filename);
+char buffer_read(Buffer* b);
+
+#define buffer_len(b) (array_size(b.value))
+#define buffer_cap(b) (array_capacity(b.value))
+
+#define buffer_read(b) (b.value[b.n])
+#define buffer_readnext(b) (b.value[b.n++])
 
 #undef this
 #undef this_t
