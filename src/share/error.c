@@ -1,3 +1,5 @@
+#include "share/common.h"
+
 #include <share/error.h>
 #include <stdarg.h>
 #include <stdio.h>

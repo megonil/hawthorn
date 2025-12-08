@@ -1,10 +1,9 @@
-#include "interpreter/repl.h"
-#include "lexer/lexer.h"
-#include "lexer/token.h"
-#include "parser/parser.h"
-#include "share/string.h"
+#include <interpreter/repl.h>
+#include <lexer/lexer.h>
+#include <parser/parser.h>
+#include <share/string.h>
 
-#include <stdio.h>
+def_parser();
 
 int main(int argc, char* argv[])
 {
@@ -12,10 +11,16 @@ int main(int argc, char* argv[])
 	{
 		repl_cycle();
 	}
+
 	else if (argc == 2)
 	{
-		str source_name = make_str(argv[1]);
-		parse(source_name);
+		SynLexState sls;
+		str			source_name = make_str(argv[1]);
+
+		parser_init(&p, &sls);
+		parse(&source_name);
+
+		parser_destroy(&p);
 	}
 
 	return 0;

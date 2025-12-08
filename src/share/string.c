@@ -82,7 +82,7 @@ void String_init(String* string)
 {
 	string->length	 = 0;
 	string->capacity = CAP_INITIAL;
-	string->value	 = (base_char_mut*) malloc(string->capacity);
+	string->value	 = malloc(string->capacity);
 }
 
 void String_append(String* string, cstr append_str)
@@ -180,4 +180,15 @@ void buffer_readfile(Buffer* b, cstr filename)
 	fclose(file);
 	b->value[file_size]			 = '\0';
 	array_header(b->value)->size = file_size + 1;
+}
+
+void buffer_destroy(Buffer* b)
+{
+	if (b->value)
+	{
+		array_free(b->value);
+	}
+
+	b->value = NULL;
+	b->n	 = 0;
 }

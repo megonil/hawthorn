@@ -34,8 +34,6 @@ file(
 add_subdirectory(src/share)
 add_subdirectory(src/lexer)
 add_subdirectory(src/parser)
-add_subdirectory(src/semantic)
-add_subdirectory(src/compiler)
 add_subdirectory(src/interpreter)
 
 add_executable(hawthorn src/main.c)
@@ -43,12 +41,5 @@ add_executable(hawthorn src/main.c)
 target_include_directories(hawthorn PRIVATE ${DEFAULT_INCLUDE_DIR})
 
 target_link_libraries(
-  hawthorn
-  PRIVATE megonil_error
-          megonil_array
-          megonil_string
-          hawthorn_lexer
-          hawthorn_parser
-          hawthorn_compiler
-          hawthorn_semantic
-          hawthorn_interpreter)
+  hawthorn PRIVATE megonil_error megonil_array megonil_string
+                   hawthorn_interpreter hawthorn_lexer hawthorn_parser)

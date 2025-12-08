@@ -1,4 +1,4 @@
-add_library(hawthorn_chunk STATIC chunk.c)
+add_library(hawthorn_chunk STATIC chunk.c opcodes.c)
 
 target_include_directories(hawthorn_chunk PUBLIC "${DEFAULT_INCLUDE_DIR}")
 

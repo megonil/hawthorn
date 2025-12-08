@@ -40,13 +40,15 @@ HAWI_FUNC noret synlex_syntaxerror(this, cstr message);
 HAWI_FUNC noret synlex_lexerror(this, cstr message);
 HAWI_FUNC cstr	synlex_tokentostr(this, TokenType token);
 
-lexer_char synlex_lex(this, SemInfo* seminfo);
-void	   synlex_destroy(this);
+Token synlex_lex(this);
+void  synlex_destroy(this);
 
 #if SLS_DEBUGL
 
-void synlex_dislex(lexer_char token);
+void	 synlex_dislex(lexer_char token);
+cstr_mut tok_2str(cstr_mut s, lexer_char token);
 
 #endif
 
 #endif // !haw_lexer
+#undef this

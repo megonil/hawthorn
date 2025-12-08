@@ -1,6 +1,8 @@
 #ifndef haw_parser
 #define haw_parser
 
+#include "chunk/chunk.h"
+#include "lexer/lexer.h"
 #include "share/string.h"
 #include "type/type.h"
 #include "value/value.h"
@@ -42,8 +44,6 @@ typedef enum : uint8_t
 	E_BRANCH, // if/else/else if
 	E_CALL,
 } exprkind;
-
-void parse(str filename);
 
 #define e_isvar(e) (E_LOCAL <= (e) && (e) <= E_STRINDEXED)
 #define e_isindexed(e) (E_INDEXED <= (e) && (e) <= E_STRINDEXED)
@@ -110,6 +110,21 @@ typedef struct
 {
 	VarDesc* vars; // list of all active local variables
 	int		 scopes_deep;
-} ParserData;
 
+	Chunk chunk;
+
+	Token		 previous;
+	Token		 current;
+	SynLexState* sls;
+} Parser;
+
+#undef this
+#define this Parser p
+
+void parse(str* filename);
+void parser_init(Parser* p, SynLexState* sls);
+
+void parser_destroy(Parser* p);
+
+#define def_parser() extern this
 #endif // !haw_parser

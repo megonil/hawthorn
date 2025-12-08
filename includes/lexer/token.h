@@ -49,6 +49,7 @@ typedef enum : uint16_t
 	TK_VOID,
 
 	TK_NAME,
+	TK_EOF,
 } TokenType;
 
 typedef union
@@ -95,8 +96,7 @@ static cstr const haw_tokens[] = {
 	[tok_pos(TK_NUMBER)] = "<number>", [tok_pos(TK_STRING)] = "<string>",
 	[tok_pos(TK_NAME)] = "<name>",	   [tok_pos(TK_CHAR)] = "<char>",
 
-	[tok_pos(TK_GE)] = ">=",
-};
+	[tok_pos(TK_GE)] = ">=",		   [tok_pos(TK_EOF)] = "\\0"};
 #define KW_GROUP(letter, body)                                                                     \
 	case letter:                                                                                   \
 	{                                                                                              \

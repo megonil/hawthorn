@@ -1,11 +1,12 @@
 #ifndef megonil_string
 #define megonil_string
 
+#include "share/array.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
-typedef int32_t str_size;
-
+typedef int32_t	   str_size;
 typedef const char base_char;
 typedef char	   base_char_mut;
 
@@ -51,6 +52,7 @@ void String_appendc(String* string, char c);
 void String_destroy(String* string);
 void String_clear(String* string);
 
+#define String_print(string) printf("%s", string->value)
 #define String_eq(str1, str2) (strcmp(str1->value, str2->value) == 0)
 
 typedef struct
@@ -68,6 +70,8 @@ char buffer_read(Buffer* b);
 
 #define buffer_read(b) (b.value[b.n])
 #define buffer_readnext(b) (b.value[b.n++])
+
+void buffer_destroy(Buffer* b);
 
 #undef this
 #undef this_t

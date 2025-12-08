@@ -1,8 +1,6 @@
 #ifndef haw_bytecode
 #define haw_bytecode
 
-#include "type/type.h"
-
 #include <share/common.h>
 #include <share/error.h>
 
@@ -79,14 +77,6 @@ static const opprop_mask op_props[] = {
 #define op_numarg(op) ((op_props[op] >> 8) & 0xF)
 #define op_hasflag(op, flag) (op_props[op] & (flag))
 
-inline const char* op_name(OpCodes op)
-{
-	if (op <= NUM_OPCODES)
-	{
-		return opnames[op];
-	}
-
-	error("Unknown operator");
-}
+const char* op_name(OpCodes op);
 
 #endif

@@ -6,7 +6,7 @@
 #include <type/type.h>
 #include <value/value.h>
 
-typedef Value Constant;
+typedef TValue Constant;
 
 typedef struct
 {
@@ -17,7 +17,6 @@ typedef struct
 // util
 // will be undefined
 #define this Chunk* chunk
-#define this_t Chunk*
 
 #define MAX_CONSTANT_LEN UINT8_MAX
 
@@ -26,19 +25,12 @@ typedef struct
 
 #define pass_chunk(c) (&c)
 
-void   init_chunk(this);
+void   chunk_init(this);
 size_t write_constant(this, Value data);
 
-inline void emit_byte(this, hawu_byte byte)
-{
-	array_push(chunk->code, byte);
-}
+void emit_byte(this, hawu_byte byte);
 
-inline void free_chunk(this)
-{
-	array_free(chunk->code);
-	array_free(chunk->constants);
-}
+void chunk_destroy(this);
 
 void disassemble(this);
 

@@ -16,6 +16,9 @@
 
 #define MODULE_NAME "lexer"
 
+#undef this
+#define this SynLexState* sls
+
 #define save(sls, c) String_appendc(&sls->buffer, c);
 // #define save(sls, c) String_appendc(&sls->buffer, c)
 #define save_and_next(sls)                                                                         \
@@ -208,7 +211,7 @@ static int str_2num(const char* s, TValue* result)
 		next();
 	}
 
-	assert(isdigit(*p));
+	massert(isdigit(*p), "Numbers must be starting with number, found '%c'", *p);
 
 	for (; isdigit(*p) || *p == '.'; next())
 	{
@@ -263,9 +266,7 @@ static void read_string(this, SemInfo* seminfo)
 	}
 	advance(sls); // "
 
-	String s;
-	make_Stringl(&s, sls->buffer.value, sls->buffer.length - 1);
-	seminfo->str_ = &s;
+	make_String(seminfo->str_, sls->buffer.value);
 }
 
 static lexer_char read_numeral(this, SemInfo* seminfo)
@@ -334,8 +335,13 @@ void synlex_ttype_to_str(lexer_char token, cstr_mut destiny)
 	}
 }
 
-lexer_char synlex_lex(this, SemInfo* seminfo)
+Token synlex_lex(this)
 {
+#define result_tset(t)                                                                             \
+	result.type = t;                                                                               \
+	goto done;
+	SemInfo seminfo;
+	Token	result;
 	String_clear(&sls->buffer); // clear buffer
 
 	for (;;)
@@ -345,6 +351,9 @@ lexer_char synlex_lex(this, SemInfo* seminfo)
 		// #endif
 		switch (sls->current)
 		{
+		case EOF:
+			result_tset(TK_EOF);
+			break;
 		case '\n':
 		case '\r':
 			sls->line_number++;
@@ -366,40 +375,52 @@ lexer_char synlex_lex(this, SemInfo* seminfo)
 			advance(sls);
 			if (check_next1(sls, '=')) // ==
 			{
-				return TK_EQ;
+				result_tset(TK_EQ);
 			}
-			return '=';
+			else
+			{
+				result_tset('=');
+			}
+			break;
+
 		case '<':
 			advance(sls);
-			if (check_next1(sls, '='))
+			if (check_next1(sls, '=')) // <=
 			{
-				return TK_LE;
+				result_tset(TK_LE);
 			}
-			return '<';
+			else
+			{
+				result_tset('<');
+			}
+			break;
+
 		case '>':
 			advance(sls);
-			if (check_next1(sls, '='))
+			if (check_next1(sls, '=')) // >=
 			{
-				return TK_GE;
+				result_tset(TK_GE);
 			}
-			return '>';
-		case '/':
-			advance(sls);
-			if (check_next1(sls, '/'))
+			else
 			{
-				return TK_IDIV;
+				result_tset('>');
 			}
-			return '/';
+			break;
 		case '!':
 			advance(sls);
-			if (check_next1(sls, '='))
+			if (check_next1(sls, '=')) // !=
 			{
-				return TK_NOTEQ;
+				result_tset(TK_NOTEQ);
 			}
-			return '!';
+			else
+			{
+				result_tset('!');
+			}
+			break;
 		case '"':
-			read_string(sls, seminfo);
-			return TK_STRING;
+			read_string(sls, &seminfo);
+			result_tset(TK_STRING);
+			break;
 		case '\'':
 			advance(sls); // '
 
@@ -413,8 +434,10 @@ lexer_char synlex_lex(this, SemInfo* seminfo)
 			{
 				error("Expected end of char");
 			}
+
 			advance(sls); // '
-			return TK_CHAR;
+			result_tset(TK_CHAR);
+			break;
 		case '0':
 		case '1':
 		case '2':
@@ -426,19 +449,20 @@ lexer_char synlex_lex(this, SemInfo* seminfo)
 		case '8':
 		case '9':
 		{
-			return read_numeral(sls, seminfo);
+			result_tset(read_numeral(sls, &seminfo));
+			break;
 		}
 		default:
 		{
-			if (isalnum(sls->current) || sls->current == '_')
+			if (isalpha(sls->current) || sls->current == '_')
 			{
 				save_and_next(sls);
-				while (isalpha(sls->current))
+				while (isalnum(sls->current) || sls->current == '_')
 				{
 					save_and_next(sls);
 				}
 
-				return keyword_or_name(sls);
+				result_tset(keyword_or_name(sls));
 			}
 			else
 			{
@@ -446,17 +470,24 @@ lexer_char synlex_lex(this, SemInfo* seminfo)
 				lexer_char c = sls->current;
 				advance(sls);
 
-				return c;
+				result_tset(c);
 			}
 		}
+		break;
 		}
 	}
+
+done:
+	result.seminfo = seminfo;
+	return result;
+
+#undef result_tset
 }
 
 void synlex_destroy(this)
 {
 	String_destroy(&sls->buffer);
-	free((char*) sls->file_contents.value);
+	buffer_destroy(&sls->file_contents);
 }
 
 void synlex_dislex(lexer_char token)
@@ -479,6 +510,27 @@ void synlex_dislex(lexer_char token)
 	}
 }
 
+cstr_mut tok_2str(cstr_mut s, lexer_char token)
+{
+	if (token < FIRST_RESERVED) // single byte symbols?
+	{
+		if (isprint(token))
+		{
+			sprintf(s, "%c", token);
+		}
+		else
+		{
+			sprintf(s, "\\%d", token);
+		}
+	}
+	else
+	{
+		const char* str = haw_tokens[token - FIRST_RESERVED];
+		sprintf(s, "%s", str);
+	}
+
+	return s;
+}
+
 #undef assignl
 #undef this
-#undef this_t
