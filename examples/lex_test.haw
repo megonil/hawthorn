@@ -1,1 +1,11 @@
-"st1234ring"
+set abc = "1234"
+
+bind a = 'a'
+bind b = 20
+
+add: a, b =>
+{
+  a + b
+}
+
+abc = add a b

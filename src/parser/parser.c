@@ -51,11 +51,6 @@ static void stmt()
 {
 	switch (p.current.type)
 	{
-	case TK_STRING:
-		String_print(p.current.seminfo.str_);
-		next();
-		return;
-
 	// TODO
 	case TK_RETURN:
 	case TK_BREAK:
@@ -63,8 +58,6 @@ static void stmt()
 	case TK_IF:
 	case TK_FUN:
 	case TK_PRO:
-	case TK_LOCAL:
-	case TK_GLOBAL:
 	case TK_DO:
 	case TK_WHILE:
 	case TK_FOR:
@@ -76,15 +69,30 @@ static void stmt()
 	case TK_GE:
 	case TK_IDIV:
 	case TK_BOOL:
-	case TK_INT:
-	case TK_NUMBER:
-	case TK_CHAR:
 	case TK_VOID:
 	case TK_NAME:
 	case TK_EOF:
-		next();
-		return;
+	case TK_BIND:
+	case TK_SET:
+		break;
+
+	case TK_INT:
+		printf("(%d) ", p.sls->seminfo->int_);
+		break;
+
+	case TK_NUMBER:
+		printf("(%lf) ", p.sls->seminfo->num_);
+		break;
+
+	case TK_STRING:
+		String_printd(p.current.seminfo.str_);
+		break;
+	case TK_CHAR:
+		printf("('%c')", *p.sls->seminfo->str_->value);
+		break;
 	}
+
+	next();
 }
 
 void parser_init(Parser* p, SynLexState* sls)
@@ -98,15 +106,12 @@ void parser_init(Parser* p, SynLexState* sls)
 
 void parse(str* filename)
 {
-	synlex_init(p.sls, filename);
-	p.current = synlex_lex(p.sls);
+	SemInfo seminfo;
+	synlex_init(p.sls, filename, &seminfo);
 
-	while (p.current.type != TK_EOF)
+	for (next(); p.current.type != TK_EOF; stmt())
 	{
-#ifdef SLS_DEBUGL
-		synlex_dislex(p.current.type);
-#endif
-		stmt();
+		synlex_dislex(p.sls, p.current.type);
 	}
 
 	printf("\n"); // END debug seq

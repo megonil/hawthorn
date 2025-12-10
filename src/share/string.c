@@ -184,7 +184,7 @@ void buffer_readfile(Buffer* b, cstr filename)
 
 void buffer_destroy(Buffer* b)
 {
-	if (b->value)
+	if (b->value != NULL)
 	{
 		array_free(b->value);
 	}

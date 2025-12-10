@@ -53,6 +53,7 @@ void String_destroy(String* string);
 void String_clear(String* string);
 
 #define String_print(string) printf("%s", string->value)
+#define String_printd(string) printf("(\"%s\") ", string->value)
 #define String_eq(str1, str2) (strcmp(str1->value, str2->value) == 0)
 
 typedef struct
@@ -65,11 +66,11 @@ void buffer_init(Buffer* b);
 void buffer_readfile(Buffer* b, cstr filename);
 char buffer_read(Buffer* b);
 
-#define buffer_len(b) (array_size(b.value))
-#define buffer_cap(b) (array_capacity(b.value))
+#define buffer_len(b) array_size(b.value)
+#define buffer_cap(b) array_capacity(b.value)
 
-#define buffer_read(b) (b.value[b.n])
-#define buffer_readnext(b) (b.value[b.n++])
+#define buffer_read(b) b.value[b.n]
+#define buffer_readnext(b) b.value[b.n++]
 
 void buffer_destroy(Buffer* b);
 

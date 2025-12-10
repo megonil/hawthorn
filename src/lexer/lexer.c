@@ -28,9 +28,9 @@
 		advance(sls);                                                                              \
 	} while (0)
 
-static inline void advance(this)
+static inline void advance(SynLexState* sls)
 {
-	if (sls->file_contents.n + 1 < ((((ArrayHeader*) (sls->file_contents.value) - 1)->size)))
+	if (sls->file_contents.n < buffer_len(sls->file_contents))
 	{
 		sls->current = buffer_readnext(sls->file_contents);
 	}
@@ -79,6 +79,9 @@ static lexer_char is_reserved(const String* str)
 			case 'r':
 				KW_CHECK_PART(2, "eak", TK_BREAK);
 				break;
+			case 'i':
+				KW_CHECK_PART(2, "nd", TK_BIND);
+				break;
 			}
 		}
 		break;
@@ -105,9 +108,6 @@ static lexer_char is_reserved(const String* str)
 			}
 		}
 		break;
-	case 'g':
-		KW_CHECK_FULL("global", TK_GLOBAL);
-		break;
 	case 'i':
 		if (ln > 1)
 		{
@@ -121,9 +121,6 @@ static lexer_char is_reserved(const String* str)
 				break;
 			}
 		}
-		break;
-	case 'l':
-		KW_CHECK_FULL("local", TK_LOCAL);
 		break;
 	case 'o':
 		KW_CHECK_FULL("or", TK_OR);
@@ -151,6 +148,9 @@ static lexer_char is_reserved(const String* str)
 			}
 		}
 		break;
+	case 's':
+		KW_CHECK_FULL("set", TK_SET);
+		break;
 	default:
 		break;
 	}
@@ -175,6 +175,7 @@ static lexer_char keyword_or_name(this)
 
 	if (ch == 0)
 	{
+		sls->seminfo->str_ = &sls->buffer;
 		return TK_NAME;
 	}
 
@@ -299,14 +300,15 @@ static lexer_char read_numeral(this, SemInfo* seminfo)
 	}
 }
 
-void synlex_init(this, str* source_name)
+void synlex_init(this, str* source_name, SemInfo* seminfo)
 {
 	sls->source_name = source_name;
+	sls->seminfo	 = seminfo;
 
 	buffer_init(&sls->file_contents);
 	buffer_readfile(&sls->file_contents, source_name->value);
 
-	sls->current = buffer_readnext(sls->file_contents);
+	advance(sls);
 	String_init(&sls->buffer);
 }
 
@@ -340,8 +342,7 @@ Token synlex_lex(this)
 #define result_tset(t)                                                                             \
 	result.type = t;                                                                               \
 	goto done;
-	SemInfo seminfo;
-	Token	result;
+	Token result;
 	String_clear(&sls->buffer); // clear buffer
 
 	for (;;)
@@ -352,6 +353,7 @@ Token synlex_lex(this)
 		switch (sls->current)
 		{
 		case EOF:
+		case '\0':
 			result_tset(TK_EOF);
 			break;
 		case '\n':
@@ -372,17 +374,21 @@ Token synlex_lex(this)
 			}
 			break;
 		case '=':
-			advance(sls);
+			advance(sls);			   // =
 			if (check_next1(sls, '=')) // ==
 			{
 				result_tset(TK_EQ);
+			}
+			else if (check_next1(sls, '>'))
+			{
+				result_tset(TK_FATARROW);
 			}
 			else
 			{
 				result_tset('=');
 			}
-			break;
 
+			break;
 		case '<':
 			advance(sls);
 			if (check_next1(sls, '=')) // <=
@@ -394,7 +400,6 @@ Token synlex_lex(this)
 				result_tset('<');
 			}
 			break;
-
 		case '>':
 			advance(sls);
 			if (check_next1(sls, '=')) // >=
@@ -418,7 +423,7 @@ Token synlex_lex(this)
 			}
 			break;
 		case '"':
-			read_string(sls, &seminfo);
+			read_string(sls, sls->seminfo);
 			result_tset(TK_STRING);
 			break;
 		case '\'':
@@ -428,14 +433,13 @@ Token synlex_lex(this)
 			{
 				error("Expected char");
 			}
-			save_and_next(sls); // save the char payload
+			save_and_next(sls); // save the char payload(which contained in '')
 
 			if (!check_next1(sls, '\''))
 			{
 				error("Expected end of char");
 			}
 
-			advance(sls); // '
 			result_tset(TK_CHAR);
 			break;
 		case '0':
@@ -449,9 +453,10 @@ Token synlex_lex(this)
 		case '8':
 		case '9':
 		{
-			result_tset(read_numeral(sls, &seminfo));
+			result_tset(read_numeral(sls, sls->seminfo));
 			break;
 		}
+
 		default:
 		{
 			if (isalpha(sls->current) || sls->current == '_')
@@ -478,7 +483,7 @@ Token synlex_lex(this)
 	}
 
 done:
-	result.seminfo = seminfo;
+	result.seminfo = *sls->seminfo;
 	return result;
 
 #undef result_tset
@@ -490,8 +495,16 @@ void synlex_destroy(this)
 	buffer_destroy(&sls->file_contents);
 }
 
-void synlex_dislex(lexer_char token)
+int dislex_lastline = 1;
+
+void synlex_dislex(this, lexer_char token)
 {
+	if (sls->line_number > dislex_lastline)
+	{
+		printf("\n");
+		dislex_lastline = sls->line_number;
+	}
+
 	if (token < FIRST_RESERVED) // single byte symbols?
 	{
 		if (isprint(token))

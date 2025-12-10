@@ -7,7 +7,7 @@ project(
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE
       "Release"
-      CACHE STRING "Build type" FORCE)
+      CACHE STRING "Build type")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

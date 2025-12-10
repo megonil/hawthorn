@@ -23,8 +23,8 @@ typedef enum : uint16_t
 	TK_PRO, // procedure
 
 	// variables
-	TK_LOCAL,
-	TK_GLOBAL,
+	TK_BIND,
+	TK_SET,
 
 	// cycles
 	TK_DO,
@@ -50,6 +50,8 @@ typedef enum : uint16_t
 
 	TK_NAME,
 	TK_EOF,
+
+	TK_FATARROW, // =>
 } TokenType;
 
 typedef union
@@ -81,7 +83,7 @@ static cstr const haw_tokens[] = {
 	[tok_pos(TK_ELSE)] = "else",	   [tok_pos(TK_IF)] = "if",
 	[tok_pos(TK_FUN)] = "fun",		   [tok_pos(TK_PRO)] = "pro",
 
-	[tok_pos(TK_LOCAL)] = "local",	   [tok_pos(TK_GLOBAL)] = "global",
+	[tok_pos(TK_BIND)] = "bind",
 
 	[tok_pos(TK_VOID)] = "void",
 
@@ -96,7 +98,10 @@ static cstr const haw_tokens[] = {
 	[tok_pos(TK_NUMBER)] = "<number>", [tok_pos(TK_STRING)] = "<string>",
 	[tok_pos(TK_NAME)] = "<name>",	   [tok_pos(TK_CHAR)] = "<char>",
 
-	[tok_pos(TK_GE)] = ">=",		   [tok_pos(TK_EOF)] = "\\0"};
+	[tok_pos(TK_GE)] = ">=",		   [tok_pos(TK_EOF)] = "\\0",
+	[tok_pos(TK_SET)] = "set",		   [tok_pos(TK_FATARROW)] = "=>",
+};
+
 #define KW_GROUP(letter, body)                                                                     \
 	case letter:                                                                                   \
 	{                                                                                              \
