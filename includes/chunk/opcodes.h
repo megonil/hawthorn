@@ -1,6 +1,8 @@
 #ifndef haw_bytecode
 #define haw_bytecode
 
+#include "lexer/token.h"
+
 #include <share/common.h>
 #include <share/error.h>
 
@@ -18,6 +20,11 @@ typedef enum : uint8_t
 	OP_MOD,	 // %
 	OP_IDIV, // //
 	OP_NEG,	 // negate
+	OP_NOT,	 // !
+	OP_POW,	 // ^
+
+	OP_JMP,	 // jump <K>
+	OP_JMPF, // jump <K> if pop() false
 
 	OP_SETLOCAL,
 	OP_SETGLOBAL,
@@ -26,7 +33,10 @@ typedef enum : uint8_t
 
 	OP_CALL, // call function
 
+	OP_PRINT,
 	OP_RETURN,
+
+	OP_HALT,
 
 	OP_LAST,
 } OpCodes;
@@ -49,7 +59,79 @@ static const char* opnames[NUM_OPCODES] = {
 	[OP_LOADGLOBAL]	   = "LOADGLOBAL",
 	[OP_CALL]		   = "CALL",
 	[OP_RETURN]		   = "RETURN",
+	[OP_HALT]		   = "HALT",
+	[OP_PRINT]		   = "PRINT",
+	[OP_NOT]		   = "NOT",
+	[OP_POW]		   = "POW",
 };
+
+typedef enum
+{
+	// arithmetic
+	OPR_BADD,  // a + b
+	OPR_BSUB,  // a - b
+	OPR_BMUL,  // a * b
+	OPR_BDIV,  // a / b
+	OPR_BIDIV, // a // b
+	OPR_BPOW,  // a ^ b
+
+	// logical
+	OPR_BGE,  // a >= b
+	OPR_BLE,  // a <= b
+	OPR_BGT,  // a > b
+	OPR_BLT,  // a < b
+	OPR_BAND, // a and b
+	OPR_BOR,  // a or b
+} BinOpr;
+
+typedef enum
+{
+	OPR_NEGATE, // -
+	OPR_NOT,	// !
+	OPR_INC,	// ++
+	OPR_DEC,	// --
+} UnOpr;
+
+#define opcase(ch, opr)                                                                            \
+	case ch:                                                                                       \
+		return opr;
+
+static BinOpr getbinopr(int op)
+{
+	switch (op)
+	{
+		opcase('+', OPR_BADD);
+		opcase('-', OPR_BSUB);
+		opcase('*', OPR_BMUL);
+		opcase('/', OPR_BDIV);
+		opcase(TK_IDIV, OPR_BIDIV);
+		opcase(TK_AND, OPR_BAND);
+		opcase(TK_OR, OPR_BOR);
+		opcase(TK_GE, OPR_BGE);
+		opcase(TK_LE, OPR_BLE);
+		opcase('>', OPR_BGT);
+		opcase('<', OPR_BLT);
+		opcase('^', OPR_BPOW);
+	default:
+		error("Expected BinaryOperator");
+	}
+}
+
+static UnOpr getunopr(int op)
+{
+	switch (op)
+	{
+		opcase('-', OPR_NEGATE);
+		opcase('!', OPR_NOT);
+
+		opcase(TK_INC, OPR_INC);
+		opcase(TK_DEC, OPR_DEC);
+	default:
+		error("Expected UnaryOperator");
+	}
+
+#undef opcase
+}
 
 // push: how much values pushes to stack
 // pop: how much values pops from stack
@@ -71,7 +153,7 @@ static const opprop_mask op_props[] = {
 	[OP_CONSTANT] = op_prop(1, 0, 0, 1, 0, 0),	[OP_CONSTANT_LONG] = op_prop(1, 0, 0, 1, 0, 0),
 	[OP_SETLOCAL] = op_prop(0, 2, 0, 1, 0, 0),	[OP_SETGLOBAL] = op_prop(0, 2, 0, 1, 0, 0),
 	[OP_LOADLOCAL] = op_prop(1, 0, 0, 1, 0, 0), [OP_LOADGLOBAL] = op_prop(1, 0, 0, 1, 0, 0),
-	[OP_CALL] = op_prop(0, 0, 0, 1, 0, 0),
+	[OP_CALL] = op_prop(0, 0, 0, 1, 0, 0),		[OP_HALT] = op_prop(0, 0, 0, 0, 0, 0),
 };
 
 #define op_numarg(op) ((op_props[op] >> 8) & 0xF)

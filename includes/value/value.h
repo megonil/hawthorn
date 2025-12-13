@@ -1,6 +1,8 @@
 #ifndef haw_value_h
 #define haw_value_h
 
+#include "share/string.h"
+
 #include <type/type.h>
 
 // values of all types are first-class values: we can store them
@@ -11,50 +13,30 @@ typedef union
 {
 	// gcobject in bright future...
 	// function...
-	void* user_; // userdata are essentially pointers to user memory blocks, and come in 2 flavors:
-				 // heavy(allocated by haw), light(allocated and freed by the user)
 	haw_int	   int_;	// integer
 	haw_number number_; // float/double
+	String*	   str_;	// string
 } Value;
-
-#define TValueFields                                                                               \
-	Value	 value_;                                                                               \
-	HawTypes type_tag_;
 
 // tagged values like in lua
 typedef struct
 {
-	TValueFields
+	Value	value_;
+	HawType type;
 } TValue;
 
-#define HAW_VARIANT_INT (HAW_TNUMBER | (0 << 4))
-#define HAW_VARIANT_NUMBER (HAW_TNUMBER | (1 << 4))
+#define t_isint(o) ((o)->type == HAW_TINT)
+#define t_isnumber(o) ((o)->type == HAW_TNUMBER)
+#define t_isstring(o) ((o)->type == HAW_TSTRING)
+#define t_isvoid(o) ((o)->type == HAW_TVOID)
+#define t_isvoid(o) ((o)->type == HAW_TVOID)
+#define t_isvalid(o) ((o)->type > HAW_TNONE)
 
-#define val_(o) ((o)->value_)
-#define valraw(o) (val_(o))
+#define int_value(o) (o)->value_.int_
+#define number_value(o) (o)->value_.number_
+#define string_value(o) (o)->value_.str_
 
-#define novariant(t) ((t) & 0x0F)
-#define withvariant(t) ((t) & 0x3F)
-
-#define rawtt(o) ((o)->type_tag_)
-#define ttypetag(o) withvariant(rawtt(o))
-#define ttype(o) (novariant(rawtt(o)))
-
-#define HAW_VARIANT(o) (withvariant(rawtt(o)))
-
-// test your types
-#define checktag(o, t) (rawtt(o) == (t))
-#define checktype(o, t) (ttype(o) == (t))
-
-#define cast_value(val) ((Value) val)
-
-#define tt_isint(o) (HAW_VARIANT(o) == HAW_VARIANT_INT)
-#define tt_isnumber(o) (HAW_VARIANT(o) == HAW_VARIANT_NUMBER)
-
-#define int_value(o) val_(o).int_
-#define number_value(o) val_(o).number_
-
-#define setivalue(o, v) int_value(o) = v;
-#define setnvalue(o, v) number_value(o) = v;
+#define setnvalue(o, v) (o)->value_.number_ = v
+#define setivalue(o, v) (o)->value_.int_ = v
 
 #endif //! haw_value_h

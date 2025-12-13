@@ -8,13 +8,13 @@ typedef enum
 {
 	HAW_TNONE = -1,
 	HAW_TVOID,
-	HAW_TBOOL,
+	HAW_TINT,
 	HAW_TNUMBER,
 	HAW_TSTRING,
 	HAW_TOBJECT,
 	HAW_TFN,
 	HAW_TTHREAD,
-} HawTypes;
+} HawType;
 
 // some typedefs
 typedef unsigned char hawu_byte;

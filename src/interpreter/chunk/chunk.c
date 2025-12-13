@@ -3,6 +3,7 @@
 #include "value/value.h"
 
 #include <chunk/chunk.h>
+#include <stdint.h>
 #include <stdio.h>
 
 void chunk_init(Chunk* chunk)
@@ -24,72 +25,119 @@ void chunk_destroy(this)
 
 static void print_value(const TValue* v)
 {
-	if (tt_isint(v))
+	if (t_isint(v))
 	{
-		printf("%lld", (long long) int_value(v));
+		printf("%d", int_value(v));
 	}
-	else if (tt_isnumber(v))
+	else if (t_isnumber(v))
 	{
 		printf("%f", (double) number_value(v));
 	}
+	else if (t_isstring(v))
+	{
+		String_print(string_value(v));
+	}
+	else if (t_isvoid(v))
+	{
+		printf("<void>");
+	}
 	else
 	{
-		printf("<unknown type %d>", rawtt(v));
+		printf("<unknown type %d>", v->type);
 	}
 }
-static int disassemble_instruction(Chunk* chunk, int offset)
+
+static void simple_instruction(OpCodes opcode, int* offset)
 {
-	uint8_t op = chunk->code[offset];
+	printf("%4d %s\n", *offset, op_name(opcode));
+	(*offset)++;
+}
 
-	printf("%04d  %-16s", offset, op_name(op));
+static void constant_instruction(Chunk* chunk, int* offset)
+{
+	uint8_t index = chunk->code[*offset + 1];
 
-	int next = offset + 1;
+	printf("%4d %s %hu (", *offset, op_name(OP_CONSTANT), index);
+	print_value(&chunk->constants[index]);
+	printf(")\n");
 
-	if (op_hasflag(op, (1 << 3)))
+	(*offset) += 2;
+}
+
+static void constantlong_instruction(Chunk* chunk, int* offset)
+{
+	uint32_t index = (uint32_t) chunk->code[*offset + 1] |
+					 (uint32_t) chunk->code[*offset + 2] << 8 |
+					 (uint32_t) chunk->code[*offset + 3] << 16;
+
+	printf("%04d %s %3u (", (*offset)++, op_name(OP_CONSTANT), index);
+
+	if (index < array_size(chunk->constants))
 	{
-		uint32_t arg = 0;
-
-		if (op == OP_CONSTANT_LONG)
-		{
-			arg = (chunk->code[next] << 16) | (chunk->code[next + 1] << 8) | chunk->code[next + 2];
-			next += 3;
-		}
-		else
-		{
-			arg = chunk->code[next++];
-		}
-
-		printf(" arg=%u", arg);
-
-		if (op_hasflag(op, (1 << 2)))
-		{
-			printf(" ; const=");
-			print_value(&chunk->constants[arg]);
-		}
+		print_value(&chunk->constants[index]);
 	}
+	else
+	{
+		printf("Invalid index: %u", index);
+	}
+	printf(")\n");
 
-	int push = (op_props[op] >> 8) & 0xF;
-	int pop	 = (op_props[op] >> 12) & 0xF;
-
-	printf(" ; pop=%d push=%d", pop, push);
-
-	if (op_hasflag(op, (1 << 1))) printf(" ret");
-
-	if (op_hasflag(op, (1 << 4))) printf(" jump");
-
-	printf("\n");
-
-	return next;
+	(*offset) += 4;
 }
 
 void disassemble(Chunk* chunk)
 {
-	printf("=== disassembly ===\n");
-
-	for (int offset = 0; offset < array_size(chunk->code); offset++)
+	printf("-- Bytecode\n");
+	printf("   ");
+	for (int i = 0; i < array_size(chunk->code); i++)
 	{
-		offset = disassemble_instruction(chunk, offset);
+		printf("%02X ", chunk->code[i]);
 	}
 
-	printf("=== end ===\n");
+	printf("\n");
+
+	for (int offset = 0; offset < array_size(chunk->code);)
+	{
+		switch (chunk->code[offset])
+		{
+		case OP_CONSTANT:
+			constant_instruction(chunk, &offset);
+			break;
+		case OP_CONSTANT_LONG:
+			constantlong_instruction(chunk, &offset);
+			break;
+		default:
+			simple_instruction(chunk->code[offset], &offset);
+			break;
+		}
+	}
+}
+
+uint32_t add_constant(Chunk* chunk, Constant data)
+{
+	array_push(chunk->constants, data);
+
+	return array_size(chunk->constants) - 1;
+}
+
+uint32_t write_constant(Chunk* chunk, Constant data)
+{
+	uint32_t index = add_constant(chunk, data);
+
+	if (index <= UINT8_MAX)
+	{
+		emit_byte(chunk, OP_CONSTANT);
+		emit_byte(chunk, index);
+
+		return index;
+	}
+	else
+	{
+		emit_byte(chunk, OP_CONSTANT_LONG);
+		emit_byte(chunk, index & 0xFF);
+		emit_byte(chunk, (index >> 8) & 0xFF);
+		emit_byte(chunk, (index >> 16) & 0xFF);
+	}
+
+	return index;
 }

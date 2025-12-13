@@ -11,7 +11,7 @@
 // start at the following value.
 #define FIRST_RESERVED (UCHAR_MAX + 1)
 
-typedef enum : uint16_t
+typedef enum
 {
 	TK_RETURN = FIRST_RESERVED,
 	TK_BREAK,
@@ -19,8 +19,6 @@ typedef enum : uint16_t
 	// blocks
 	TK_ELSE,
 	TK_IF,
-	TK_FUN, // function
-	TK_PRO, // procedure
 
 	// variables
 	TK_BIND,
@@ -52,6 +50,10 @@ typedef enum : uint16_t
 	TK_EOF,
 
 	TK_FATARROW, // =>
+	TK_PRINT,
+
+	TK_INC, // ++
+	TK_DEC, // --
 } TokenType;
 
 typedef union
@@ -63,8 +65,8 @@ typedef union
 
 typedef struct
 {
-	TokenType type;
-	SemInfo	  seminfo;
+	int		type;
+	SemInfo seminfo;
 } Token;
 
 typedef int32_t lexer_size;
@@ -81,7 +83,6 @@ static cstr const haw_tokens[] = {
 	[tok_pos(TK_RETURN)] = "return",   [tok_pos(TK_BREAK)] = "break",
 
 	[tok_pos(TK_ELSE)] = "else",	   [tok_pos(TK_IF)] = "if",
-	[tok_pos(TK_FUN)] = "fun",		   [tok_pos(TK_PRO)] = "pro",
 
 	[tok_pos(TK_BIND)] = "bind",
 
@@ -100,6 +101,8 @@ static cstr const haw_tokens[] = {
 
 	[tok_pos(TK_GE)] = ">=",		   [tok_pos(TK_EOF)] = "\\0",
 	[tok_pos(TK_SET)] = "set",		   [tok_pos(TK_FATARROW)] = "=>",
+	[tok_pos(TK_PRINT)] = "print",	   [tok_pos(TK_INC)] = "++",
+	[tok_pos(TK_DEC)] = "--",
 };
 
 #define KW_GROUP(letter, body)                                                                     \

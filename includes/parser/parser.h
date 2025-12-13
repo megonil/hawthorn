@@ -7,6 +7,8 @@
 #include "type/type.h"
 #include "value/value.h"
 
+#include <stdint.h>
+
 typedef enum : uint8_t
 {
 	E_VOID,
@@ -91,7 +93,6 @@ typedef union
 {
 	struct
 	{
-		TValueFields; // constant value (if it is a compile-time constant)
 		varkind	  kind;
 		hawu_byte reg;	// register holding the value
 		String*	  name; // variable name
@@ -126,5 +127,33 @@ void parser_init(Parser* p, SynLexState* sls);
 
 void parser_destroy(Parser* p);
 
+typedef enum : uint8_t
+{
+	PREC_NONE,
+	PREC_ASSIGNMENT, // =
+	PREC_OR,		 // or
+	PREC_AND,		 // and
+	PREC_EQ,		 // == !=
+	PREC_COMPARISON, // < > <= >=
+	PREC_TERM,		 // + -
+	PREC_FACTOR,	 // * / //
+	PREC_UNARY,
+	PREC_CALL,
+	PREC_PRIMARY,
+} Precedence;
+
+typedef void (*ParseFn)();
+
+typedef struct
+{
+	ParseFn	   prefix;
+	ParseFn	   infix;
+	Precedence precedence;
+} ParseRule;
+
 #define def_parser() extern this
+
+// for now just define this for *debug flag*
+#define DISASSEMBLE
+
 #endif // !haw_parser

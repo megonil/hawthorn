@@ -1,3 +1,7 @@
+#include "chunk/opcodes.h"
+#include "type/type.h"
+#include "value/value.h"
+
 #undef this
 #include <chunk/chunk.h>
 #include <lexer/lexer.h>
@@ -5,6 +9,7 @@
 #include <share/error.h>
 #include <share/string.h>
 
+#undef MODULE_NAME
 #define MODULE_NAME "parser"
 
 #include <parser/parser.h>
@@ -20,79 +25,303 @@ static void next()
 	p.current  = synlex_lex(p.sls);
 }
 
+static void consumef(TokenType type, cstr msg)
+{
+	if (p.current.type == type)
+	{
+		next();
+		return;
+	}
+	errorf("Expected %s, found %s", tok_2str("", type), tok_2str("", p.current.type));
+}
+
 static void consume(TokenType type, cstr msg)
 {
 	if (p.current.type == type)
 	{
 		next();
+		return;
 	}
-	errorf("Expected %s, found %s", tok_2str("", type), tok_2str("", type));
+	errorf("Expected %s %s", tok_2str("", type), msg);
 }
 
 // Statements
 #define dstmt(s) static void s()
 dstmt(stmt);
 dstmt(vardecl);
+dstmt(printstat);
 
 // Expressions
 #define dexpr(s) static void s()
 dexpr(expr);
-dexpr(intlit);
-dexpr(numlit);
-dexpr(strlit);
+dexpr(binary);
+dexpr(unary);
+dexpr(literal);
 dexpr(varexpr);
+dexpr(grouping);
+dexpr(postfix);
+
+static void prec(Precedence prec);
+
+#define emptyrule(t) [t] = {NULL, NULL, PREC_NONE}
+#define onlyifunc(t, f) [t] = {NULL, f, PREC_NONE}
+#define onlypfunc(t, f) [t] = {f, NULL, PREC_NONE}
+#define fullrule(t, fi, fp, p) [t] = {fi, fp, p}
+#define rule(t, ...) [t] = {__VA_ARGS__}
+
+static ParseRule rules[] = {
+	// operators
+	fullrule('+', unary, binary, PREC_TERM),
+	fullrule('-', unary, binary, PREC_TERM),
+	rule('*', NULL, binary, PREC_FACTOR),
+	rule('/', NULL, binary, PREC_FACTOR),
+	rule('^', NULL, binary, PREC_FACTOR),
+	rule(TK_IDIV, NULL, binary, PREC_FACTOR),
+	// unary
+	rule(TK_INC, unary, postfix, PREC_UNARY),
+	rule(TK_DEC, unary, postfix, PREC_UNARY),
+	rule('!', NULL, unary, PREC_UNARY),
+
+	// symbols
+	onlypfunc('(', grouping),
+	emptyrule(')'),
+	emptyrule('{'),
+	emptyrule('}'),
+	emptyrule(','),
+	emptyrule('.'),
+	emptyrule('='),
+	emptyrule('>'),
+	emptyrule('<'),
+	emptyrule(':'),
+	// 2 char symbols
+	emptyrule(TK_EQ),
+	emptyrule(TK_LE),
+	emptyrule(TK_GE),
+	emptyrule(TK_FATARROW),
+	// keywords
+	emptyrule(TK_AND),
+	emptyrule(TK_OR),
+	emptyrule(TK_BIND),
+	emptyrule(TK_SET),
+	emptyrule(TK_WHILE),
+	emptyrule(TK_FOR),
+	emptyrule(TK_DO),
+	emptyrule(TK_IF),
+	emptyrule(TK_ELSE),
+	emptyrule(TK_RETURN),
+	// literals
+	onlypfunc(TK_STRING, literal),
+	onlypfunc(TK_NUMBER, literal),
+	onlypfunc(TK_INT, literal),
+	onlypfunc(TK_CHAR, literal),
+	onlypfunc(TK_BOOL, literal),
+	onlypfunc(TK_VOID, literal),
+	// others
+	emptyrule(TK_NAME),
+	emptyrule(TK_EOF),
+};
+
+#undef emptyrule
+#undef onlyifunc
+#undef onlypfunc
+#undef fullrule
+#undef rule
+
+#define getrule(op) (&rules[op])
 
 #undef dexpr
 #undef dstmt
 
-#define expected(t) errorf("Expected ", tok_2str(t))
+#define expecteds(t) errorf("Expected %s", tok_2str(t))
+#define expected(m) errorf("Expected %s", m)
+
+#define seminf p.sls->seminfo
 
 static void stmt()
 {
 	switch (p.current.type)
 	{
-	// TODO
+		// TODO
+	case ';': // empty statement
+		next();
+		break;
+
 	case TK_RETURN:
 	case TK_BREAK:
-	case TK_ELSE:
 	case TK_IF:
-	case TK_FUN:
-	case TK_PRO:
 	case TK_DO:
 	case TK_WHILE:
 	case TK_FOR:
-	case TK_AND:
-	case TK_OR:
-	case TK_NOTEQ:
-	case TK_EQ:
-	case TK_LE:
-	case TK_GE:
-	case TK_IDIV:
-	case TK_BOOL:
-	case TK_VOID:
-	case TK_NAME:
-	case TK_EOF:
 	case TK_BIND:
 	case TK_SET:
+		next();
 		break;
 
-	case TK_INT:
-		printf("(%d) ", p.sls->seminfo->int_);
+	case TK_PRINT:
+		printstat();
 		break;
+	default:
+		expected("statement");
+	}
+}
 
-	case TK_NUMBER:
-		printf("(%lf) ", p.sls->seminfo->num_);
-		break;
+static void printstat()
+{
+	next();
+	expr();
+	emit_byte(&p.chunk, OP_PRINT);
+	next();
+}
 
-	case TK_STRING:
-		String_printd(p.current.seminfo.str_);
-		break;
-	case TK_CHAR:
-		printf("('%c')", *p.sls->seminfo->str_->value);
-		break;
+static void expr()
+{
+	prec(PREC_ASSIGNMENT);
+}
+
+static void prec(Precedence prec)
+{
+	next(); // skips 1 in 1 + 1
+	ParseFn prefix = getrule(p.previous.type)->prefix;
+
+	// so is not a literal(and not unary operator)
+	if (prefix == NULL)
+	{
+		expected("expression");
+		return;
 	}
 
-	next();
+	prefix();
+
+	while (prec <= getrule(p.current.type)->precedence)
+	{
+		next();
+
+		ParseFn infix = getrule(p.previous.type)->infix;
+		infix();
+	}
+}
+
+static void binary()
+{
+	lexer_char op	= p.previous.type;
+	ParseRule* rule = getrule(op);
+
+	prec((Precedence) rule->precedence + 1);
+
+	switch (getbinopr(op))
+	{
+#define oper(OP, B)                                                                                \
+	case OP:                                                                                       \
+		emit_byte(&p.chunk, B);                                                                    \
+		break;
+
+		oper(OPR_BADD, OP_ADD);
+		oper(OPR_BSUB, OP_SUB);
+		oper(OPR_BMUL, OP_MUL);
+		oper(OPR_BDIV, OP_DIV);
+		oper(OPR_BIDIV, OP_IDIV);
+		oper(OPR_BPOW, OP_POW);
+
+#undef oper
+	default:
+		unreachable();
+	}
+}
+
+static void unary()
+{
+	lexer_char op = p.previous.type;
+
+	prec(getrule(p.previous.type)->precedence + 1);
+
+	if (op == '+')
+	{
+		return;
+	}
+
+	switch (getunopr(op))
+	{
+	case OPR_NEGATE:
+		emit_byte(&p.chunk, OP_NEG);
+		break;
+	case OPR_INC:
+		TValue val;
+		val.type = HAW_TINT;
+		setivalue(&val, 1);
+		write_constant(&p.chunk, val);
+		emit_byte(&p.chunk, OP_ADD);
+		break;
+	case OPR_DEC:
+		TValue vala;
+		vala.type = HAW_TINT;
+		setivalue(&vala, 1);
+		write_constant(&p.chunk, vala);
+		emit_byte(&p.chunk, OP_SUB);
+		break;
+	case OPR_NOT:
+		emit_byte(&p.chunk, OP_NOT);
+		break;
+
+	default:
+		unreachable();
+	}
+}
+
+static void postfix()
+{
+	lexer_char op = p.previous.type;
+
+	TValue one;
+	one.type = HAW_TINT;
+	setivalue(&one, 1);
+	write_constant(&p.chunk, one);
+
+	if (op == TK_INC)
+	{
+		emit_byte(&p.chunk, OP_ADD);
+	}
+	else
+	{
+		emit_byte(&p.chunk, OP_SUB);
+	}
+}
+
+static void grouping()
+{
+	expr();
+	consume(')', "after expression");
+}
+
+static void literal()
+{
+	TValue result;
+	Value  val;
+
+	switch (p.previous.type)
+	{
+	case TK_NUMBER:
+		val.number_ = seminf->num_;
+		result.type = HAW_TNUMBER;
+		break;
+	case TK_BOOL:
+	case TK_INT:
+		val.int_	= seminf->int_;
+		result.type = HAW_TINT;
+		break;
+	case TK_STRING:
+		val.str_	= seminf->str_;
+		result.type = HAW_TSTRING;
+		break;
+	case TK_CHAR:
+		val.int_	= *seminf->str_->value;
+		result.type = HAW_TINT;
+		break;
+	default:
+		expected("expression");
+	}
+
+	result.value_ = val;
+	write_constant(&p.chunk, result);
 }
 
 void parser_init(Parser* p, SynLexState* sls)
@@ -104,18 +333,25 @@ void parser_init(Parser* p, SynLexState* sls)
 	p->vars = array(VarDesc);
 }
 
+#define halt() emit_byte(&p.chunk, OP_HALT)
+
 void parse(str* filename)
 {
 	SemInfo seminfo;
 	synlex_init(p.sls, filename, &seminfo);
+	next();
 
-	for (next(); p.current.type != TK_EOF; stmt())
+	for (synlex_dislex(p.sls, p.current.type); p.current.type != TK_EOF; stmt())
 	{
-		synlex_dislex(p.sls, p.current.type);
 	}
 
 	printf("\n"); // END debug seq
-	// String_destroy(dummy.str_);
+	halt();
+
+#ifdef DISASSEMBLE
+	disassemble(&p.chunk);
+#endif
+
 	synlex_destroy(p.sls);
 }
 

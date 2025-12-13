@@ -3,6 +3,7 @@
 
 #include <share/array.h>
 #include <share/common.h>
+#include <stdint.h>
 #include <type/type.h>
 #include <value/value.h>
 
@@ -19,14 +20,13 @@ typedef struct
 #define this Chunk* chunk
 
 #define MAX_CONSTANT_LEN UINT8_MAX
-
 #define BYTE 0xFF
 #define BYTE_DEC 8
 
 #define pass_chunk(c) (&c)
 
-void   chunk_init(this);
-size_t write_constant(this, Value data);
+void	 chunk_init(this);
+uint32_t write_constant(this, Constant data);
 
 void emit_byte(this, hawu_byte byte);
 

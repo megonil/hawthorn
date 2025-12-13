@@ -53,7 +53,7 @@ static lexer_char check_next1(this, lexer_char c)
 	return 0;
 }
 
-static lexer_char is_reserved(const String* str)
+static lexer_char is_reserved(const String* str, SemInfo* seminfo)
 {
 	const char* s  = str->value;
 	size_t		ln = (size_t) str->length;
@@ -99,11 +99,9 @@ static lexer_char is_reserved(const String* str)
 			case 'o':
 				KW_CHECK_PART(1, "or", TK_FOR);
 				break;
-			case 'u':
-				KW_CHECK_PART(2, "n", TK_FUN);
-				break;
 			case 'a':
 				KW_CHECK_PART(2, "lse", TK_BOOL);
+				seminfo->int_ = 0;
 				break;
 			}
 		}
@@ -125,9 +123,6 @@ static lexer_char is_reserved(const String* str)
 	case 'o':
 		KW_CHECK_FULL("or", TK_OR);
 		break;
-	case 'p':
-		KW_CHECK_FULL("pro", TK_PRO);
-		break;
 	case 'r':
 		KW_CHECK_FULL("return", TK_RETURN);
 		break;
@@ -144,12 +139,16 @@ static lexer_char is_reserved(const String* str)
 			{
 			case 'r':
 				KW_CHECK_PART(2, "ue", TK_BOOL);
+				seminfo->int_ = 1;
 				break;
 			}
 		}
 		break;
 	case 's':
 		KW_CHECK_FULL("set", TK_SET);
+		break;
+	case 'p':
+		KW_CHECK_FULL("print", TK_PRINT);
 		break;
 	default:
 		break;
@@ -171,7 +170,7 @@ static lexer_char check_next2(this, const char* set)
 
 static lexer_char keyword_or_name(this)
 {
-	lexer_char ch = is_reserved(&sls->buffer);
+	lexer_char ch = is_reserved(&sls->buffer, sls->seminfo);
 
 	if (ch == 0)
 	{
@@ -389,6 +388,27 @@ Token synlex_lex(this)
 			}
 
 			break;
+		case '+':
+			advance(sls); // +
+			if (check_next1(sls, '+'))
+			{
+				result_tset(TK_INC);
+			}
+			else
+			{
+				result_tset('+');
+			}
+
+		case '-':
+			advance(sls); // -
+			if (check_next1(sls, '-'))
+			{
+				result_tset(TK_DEC);
+			}
+			else
+			{
+				result_tset('-');
+			}
 		case '<':
 			advance(sls);
 			if (check_next1(sls, '=')) // <=
