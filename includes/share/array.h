@@ -1,7 +1,6 @@
 #ifndef megonil_vector
 #define megonil_vector
 
-#include "common.h"
 #include "signal.h"
 
 #define ARRAY_INITIAL_CAPACITY 8
@@ -29,7 +28,7 @@ typedef struct
 
 #define array_empty(ARR) array_size((ARR)) == 0
 
-#define array_pop(ARR, T) (T*) ARR[array_header(ARR)->size--]
+#define array_pop(ARR, T) (((T*) (ARR))[--array_header(ARR)->size])
 
 #define array_push(ARR, VALUE)                                                                     \
 	ARR							   = array_ensure_capacity(ARR, 1, sizeof(VALUE));                 \

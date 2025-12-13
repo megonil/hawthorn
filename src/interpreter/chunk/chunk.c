@@ -23,30 +23,6 @@ void chunk_destroy(this)
 	array_free(chunk->constants);
 }
 
-static void print_value(const TValue* v)
-{
-	if (t_isint(v))
-	{
-		printf("%d", int_value(v));
-	}
-	else if (t_isnumber(v))
-	{
-		printf("%f", (double) number_value(v));
-	}
-	else if (t_isstring(v))
-	{
-		String_print(string_value(v));
-	}
-	else if (t_isvoid(v))
-	{
-		printf("<void>");
-	}
-	else
-	{
-		printf("<unknown type %d>", v->type);
-	}
-}
-
 static void simple_instruction(OpCodes opcode, int* offset)
 {
 	printf("%4d %s\n", *offset, op_name(opcode));

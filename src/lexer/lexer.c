@@ -4,7 +4,10 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <float.h>
 #include <lexer/lexer.h>
+#include <limits.h>
 #include <share/array.h>
 #include <share/error.h>
 #include <share/hawthorn.h>
@@ -229,11 +232,29 @@ static int str_2num(const char* s, TValue* result)
 
 	if (!dot) // just integer value
 	{
-		haw_int i = strtoll(s, NULL, 10);
-		setivalue(result, i);
+		long long val = strtoll(s, NULL, 10);
+
+		if (errno == ERANGE)
+		{
+			// errorf("Integer literal %s is too large", s);
+			goto convert_to_number;
+		}
+
+		if (val > (long long) HAW_INT_MAX || val < (long long) HAW_INT_MIN)
+		{
+			// errorf("Integer literal %s exceeds limits of haw_int (%lld to %lld)", s,
+			// (long long) HAW_INT_MIN, (long long) HAW_INT_MAX);
+			goto convert_to_number;
+		}
+
+		setivalue(result, val);
 		return 1;
 	}
-
+	else
+	{
+		goto convert_to_number;
+	}
+convert_to_number:
 	// instead haw_number
 	haw_number n = strtod(s, NULL);
 	setnvalue(result, n);
@@ -363,12 +384,30 @@ Token lex(this)
 		case '\v':
 			advance(ls);
 			break;
-		case '#': // comment
-			while (!current_is_new_line(ls) && ls->current != EOF)
+		case '\\':
+			advance(ls);
+			if (check_next1(ls, '\\')) // comment
 			{
-				advance(ls);
+				while (!current_is_new_line(ls) && ls->current != EOF)
+				{
+					advance(ls);
+				}
+			}
+			else
+			{
+				result_tset('\\');
 			}
 			break;
+		case '/':
+			advance(ls);
+			if (check_next1(ls, '/'))
+			{
+				result_tset(TK_IDIV);
+			}
+			else
+			{
+				result_tset('/')
+			}
 		case '=':
 			advance(ls);			  // =
 			if (check_next1(ls, '=')) // ==

@@ -24,6 +24,7 @@ BinOpr getbinopr(int op)
 		opcase(TK_OR, OPR_BOR);
 		opcase(TK_GE, OPR_BGE);
 		opcase(TK_LE, OPR_BLE);
+		opcase(TK_EQ, OPR_BEQ);
 		opcase('>', OPR_BGT);
 		opcase('<', OPR_BLT);
 		opcase('^', OPR_BPOW);

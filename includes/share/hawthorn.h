@@ -8,6 +8,7 @@
 #include "hawconf.h"
 
 // thread status
+// bright future...
 typedef enum
 {
 	THREAD_OK,

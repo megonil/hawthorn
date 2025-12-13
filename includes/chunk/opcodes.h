@@ -26,6 +26,7 @@ typedef enum : uint8_t
 	OP_LE,	 // <=
 	OP_GT,	 // >
 	OP_LT,	 // <
+	OP_EQ,	 // ==
 
 	OP_JMP,	 // jump <K>
 	OP_JMPF, // jump <K> if pop() false
@@ -71,6 +72,7 @@ static const char* opnames[NUM_OPCODES] = {
 	[OP_GT]			   = "GT",
 	[OP_LE]			   = "LE",
 	[OP_LT]			   = "LT",
+	[OP_EQ]			   = "EQ",
 };
 
 typedef enum
@@ -91,6 +93,7 @@ typedef enum
 	OPR_BLT,  // a < b
 	OPR_BAND, // a and b
 	OPR_BOR,  // a or b
+	OPR_BEQ,  // ==
 } BinOpr;
 
 typedef enum

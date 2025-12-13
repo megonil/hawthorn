@@ -1,6 +1,7 @@
 #ifndef haw_type_h
 #define haw_type_h
 
+#include <limits.h>
 #include <share/hawthorn.h>
 
 // types
@@ -29,4 +30,6 @@ typedef unsigned int  haw_unsigned;
 #define cast_hawubyte(V) cast(hawu_byte, (V))
 #define cast_hawsbyte(V) cast(haws_byte, (V))
 
+#define HAW_INT_MAX INT_MAX
+#define HAW_INT_MIN INT_MIN
 #endif // !haw_type_h

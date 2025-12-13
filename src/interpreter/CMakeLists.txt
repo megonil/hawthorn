@@ -1,4 +1,4 @@
-add_library(hawthorn_interpreter STATIC interpreter.c)
+add_library(hawthorn_interpreter STATIC vm.c)
 add_library(hawthorn_repl STATIC repl.c)
 
 add_subdirectory(chunk)

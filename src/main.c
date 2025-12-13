@@ -1,4 +1,5 @@
 #include <interpreter/repl.h>
+#include <interpreter/vm.h>
 #include <lexer/lexer.h>
 #include <parser/parser.h>
 #include <share/string.h>
@@ -19,8 +20,11 @@ int main(int argc, char* argv[])
 
 		parser_init(&p, &sls);
 		parse(&source_name);
+		vm_init(&p.chunk);
 
+		vm_execute();
 		parser_destroy(&p);
+		vm_destroy();
 	}
 
 	return 0;

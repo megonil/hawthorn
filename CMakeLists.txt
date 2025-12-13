@@ -41,5 +41,11 @@ add_executable(hawthorn src/main.c)
 target_include_directories(hawthorn PRIVATE ${DEFAULT_INCLUDE_DIR})
 
 target_link_libraries(
-  hawthorn PRIVATE megonil_error megonil_array megonil_string
-                   hawthorn_interpreter hawthorn_lexer hawthorn_parser)
+  hawthorn
+  PRIVATE megonil_error
+          megonil_array
+          megonil_string
+          hawthorn_interpreter
+          hawthorn_lexer
+          hawthorn_parser
+          m)

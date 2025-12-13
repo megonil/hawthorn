@@ -78,11 +78,13 @@ static ParseRule rules[] = {
 	rule('/', NULL, binary, PREC_FACTOR),
 	rule('^', NULL, binary, PREC_FACTOR),
 	rule(TK_IDIV, NULL, binary, PREC_FACTOR),
+	rule('%', NULL, binary, PREC_FACTOR),
 	// boolean
 	rule(TK_AND, NULL, binary, PREC_AND),
 	rule(TK_OR, NULL, binary, PREC_AND),
 	rule(TK_GE, NULL, binary, PREC_COMPARISON),
 	rule(TK_LE, NULL, binary, PREC_COMPARISON),
+	rule(TK_EQ, NULL, binary, PREC_COMPARISON),
 	rule('>', NULL, binary, PREC_COMPARISON),
 	rule('<', NULL, binary, PREC_COMPARISON),
 	// unary
@@ -100,7 +102,6 @@ static ParseRule rules[] = {
 	emptyrule('='),
 	emptyrule(':'),
 	// 2 char symbols
-	emptyrule(TK_EQ),
 	emptyrule(TK_FATARROW),
 	// keywords
 	emptyrule(TK_BIND),
@@ -223,6 +224,7 @@ static void binary()
 		oper(OPR_BDIV, OP_DIV);
 		oper(OPR_BIDIV, OP_IDIV);
 		oper(OPR_BPOW, OP_POW);
+		oper(OPR_BMOD, OP_MOD);
 		// boolean
 		oper(OPR_BAND, OP_AND);
 		oper(OPR_BOR, OP_OR);
@@ -230,6 +232,7 @@ static void binary()
 		oper(OPR_BLE, OP_LE);
 		oper(OPR_BGT, OP_GT);
 		oper(OPR_BLT, OP_LT);
+		oper(OPR_BEQ, OP_EQ);
 
 #undef oper
 	default:
@@ -365,7 +368,6 @@ void parse(str* filename)
 
 void parser_destroy(Parser* p)
 {
-	chunk_destroy(&p->chunk);
 	lex_destroy(p->ls);
 	array_free(p->vars);
 }
