@@ -81,6 +81,7 @@ static ParseRule rules[] = {
 	// arithmetic
 	fullrule('+', unary, binary, PREC_TERM),
 	fullrule('-', unary, binary, PREC_TERM),
+	rule(TK_CONCAT, NULL, binary, PREC_TERM),
 	rule('*', NULL, binary, PREC_FACTOR),
 	rule('/', NULL, binary, PREC_FACTOR),
 	rule('^', NULL, binary, PREC_FACTOR),
@@ -232,6 +233,7 @@ static void binary()
 		oper(OPR_BIDIV, OP_IDIV);
 		oper(OPR_BPOW, OP_POW);
 		oper(OPR_BMOD, OP_MOD);
+		oper(OPR_BCONCAT, OP_CONCAT);
 		// boolean
 		oper(OPR_BAND, OP_AND);
 		oper(OPR_BOR, OP_OR);

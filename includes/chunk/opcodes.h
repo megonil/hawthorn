@@ -11,22 +11,23 @@ typedef enum : uint8_t
 	OP_CONSTANT,
 	OP_CONSTANT_LONG,
 
-	OP_ADD,	 // +
-	OP_MUL,	 // *
-	OP_SUB,	 // -
-	OP_DIV,	 // /
-	OP_MOD,	 // %
-	OP_IDIV, // //
-	OP_NEG,	 // negate
-	OP_NOT,	 // !
-	OP_POW,	 // ^
-	OP_AND,	 // and
-	OP_OR,	 // or
-	OP_GE,	 // >=
-	OP_LE,	 // <=
-	OP_GT,	 // >
-	OP_LT,	 // <
-	OP_EQ,	 // ==
+	OP_ADD,	   // +
+	OP_MUL,	   // *
+	OP_SUB,	   // -
+	OP_DIV,	   // /
+	OP_MOD,	   // %
+	OP_IDIV,   // //
+	OP_NEG,	   // negate
+	OP_NOT,	   // !
+	OP_POW,	   // ^
+	OP_AND,	   // and
+	OP_OR,	   // or
+	OP_GE,	   // >=
+	OP_LE,	   // <=
+	OP_GT,	   // >
+	OP_LT,	   // <
+	OP_EQ,	   // ==
+	OP_CONCAT, // <>
 
 	OP_JMP,	 // jump <K>
 	OP_JMPF, // jump <K> if pop() false
@@ -75,18 +76,20 @@ static const char* opnames[NUM_OPCODES] = {
 	[OP_EQ]			   = "EQ",
 	[OP_AND]		   = "AND",
 	[OP_OR]			   = "OR",
+	[OP_CONCAT]		   = "CONCAT",
 };
 
 typedef enum
 {
 	// arithmetic
-	OPR_BADD,  // a + b
-	OPR_BSUB,  // a - b
-	OPR_BMUL,  // a * b
-	OPR_BDIV,  // a / b
-	OPR_BMOD,  // a % b
-	OPR_BIDIV, // a // b
-	OPR_BPOW,  // a ^ b
+	OPR_BADD,	 // a + b
+	OPR_BSUB,	 // a - b
+	OPR_BMUL,	 // a * b
+	OPR_BDIV,	 // a / b
+	OPR_BMOD,	 // a % b
+	OPR_BIDIV,	 // a // b
+	OPR_BPOW,	 // a ^ b
+	OPR_BCONCAT, // <>
 
 	// logical
 	OPR_BGE,  // a >= b

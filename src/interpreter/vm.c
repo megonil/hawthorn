@@ -5,6 +5,7 @@
 #include "lexer/lexer.h"
 #include "share/array.h"
 #include "type/type.h"
+#include "value/obj.h"
 #include "value/value.h"
 
 #include <math.h>
@@ -205,6 +206,16 @@ void vm_execute()
 
 			andoropr(OP_AND, &&);
 			andoropr(OP_OR, ||);
+
+			// string concatenation
+		case OP_CONCAT:
+		{
+			macrostart();
+			result.type = HAW_TOBJECT;
+			setovalue(&result, concatenate(string_value(&a), string_value(&b)));
+
+			macroend();
+		}
 
 #undef binopr
 #undef andoropr

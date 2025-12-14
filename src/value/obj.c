@@ -29,3 +29,17 @@ haw_string* copy_string(const char* chars, int length)
 	heap_chars[length] = '\0';
 	return allocate_string(heap_chars, length);
 }
+
+haw_string* concatenate(haw_string* a, haw_string* b)
+{
+	int	  length = a->length + b->length;
+	char* chars	 = allocate(char, length + 1);
+
+	memcpy(chars, a->chars, a->length);
+	memcpy(chars + a->length, b->chars, b->length);
+	chars[length] = '\0';
+
+	haw_string* result = allocate_string(chars, length);
+
+	return result;
+}
