@@ -266,6 +266,58 @@ convert_to_number:
 #undef next
 }
 
+static void read_escape(this)
+{
+	char c;		 // result
+	advance(ls); // start of escape sequence
+	switch (ls->current)
+	{
+	case 'a':
+		c = '\a'; // bell
+		advance(ls);
+		break;
+	case 'b':
+		c = '\b';
+		advance(ls);
+		break;
+	case 'f':
+		c = '\f';
+		advance(ls);
+		break;
+	case 'e': // escape character
+		c = '\e';
+		advance(ls);
+		break;
+	case 'r': // caret return
+	case 'n': // new line
+		c = '\n';
+		ls->line_number++;
+		advance(ls);
+		break;
+	case 't': // horizontal tab
+		c = '\t';
+		advance(ls);
+		break;
+	case 'v': // vertical tab
+		c = '\v';
+		advance(ls);
+		break;
+	case '\\': // backslash
+	case '"':  // "
+	case '\'': // "
+		c = ls->current;
+		advance(ls);
+		break;
+	case EOF:
+		return;
+	default:
+		save_and_next(ls);
+		return;
+	}
+
+	save(ls, c);
+}
+
 static void read_string(this, SemInfo* seminfo)
 {
 	assert(ls->current == '"');
@@ -280,6 +332,11 @@ static void read_string(this, SemInfo* seminfo)
 		case '\r':
 			error("Unfinished string");
 			break;
+		case '\\':
+		{
+			read_escape(ls);
+			break;
+		}
 		default:
 			save_and_next(ls);
 		}
@@ -514,13 +571,22 @@ Token lex(this)
 			{
 				error("Expected char");
 			}
-			save_and_next(ls); // save the char payload(which contained in '')
+
+			if (ls->current == '\\')
+			{
+				read_escape(ls);
+			}
+			else
+			{
+				save_and_next(ls); // save the char payload(which contained in '')
+			}
 
 			if (!check_next1(ls, '\''))
 			{
 				error("Expected end of char");
 			}
 
+			ls->seminfo->str_ = copy_string(ls->buffer.value, ls->buffer.length);
 			result_tset(TK_CHAR);
 			break;
 		case '0':

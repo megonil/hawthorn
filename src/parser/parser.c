@@ -331,11 +331,10 @@ static void literal()
 		setovalue(&result, seminf->str_);
 		obj_type(&result) = OBJ_STRING;
 		result.type		  = HAW_TOBJECT;
-
 		break;
 	case TK_CHAR:
-		(&result)->value_.int_ = p.ls->seminfo->str_->chars[0];
-		result.type			   = HAW_TINT;
+		setivalue(&result, *seminf->str_->chars); // assign the 1st char
+		result.type = HAW_TINT;
 		break;
 	default:
 		expected("expression");
