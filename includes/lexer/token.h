@@ -104,7 +104,7 @@ static cstr const haw_tokens[] = {
 	[tok_pos(TK_GE)] = ">=",		   [tok_pos(TK_EOF)] = "\\0",
 	[tok_pos(TK_SET)] = "set",		   [tok_pos(TK_FATARROW)] = "=>",
 	[tok_pos(TK_PRINT)] = "print",	   [tok_pos(TK_INC)] = "++",
-	[tok_pos(TK_DEC)] = "--",
+	[tok_pos(TK_DEC)] = "--",		   [tok_pos(TK_CONCAT)] = "<>",
 };
 
 #define KW_GROUP(letter, body)                                                                     \

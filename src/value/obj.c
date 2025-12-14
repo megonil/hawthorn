@@ -1,9 +1,12 @@
 #include <interpreter/vm.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <value/obj.h>
 
-#define allocate_obj(type, objectType) (type*) allocate_object(sizeof(type), objectType)
+#define allocate_obj(type, object_type) (type*) allocate_object(sizeof(type), object_type)
+
+#define allocate_obj_fam(size, type, object_type) (type*) allocate_object(size, object_type)
 
 static Obj* allocate_object(size_t size, ObjType type)
 {
@@ -27,11 +30,17 @@ static haw_string* allocate_string(char* chars, int length)
 
 haw_string* copy_string(const char* chars, int length)
 {
-	char* heap_chars = allocate(char, length + 1);
-	memcpy(heap_chars, chars, length);
+	size_t chars_size = sizeof(char) * (length + 1);
 
-	heap_chars[length] = '\0';
-	return allocate_string(heap_chars, length);
+	haw_string* string = allocate_obj_fam(sizeof(*string) + chars_size, haw_string, OBJ_STRING);
+
+	string->length = length;
+	string->chars  = (char*) (string + 1);
+
+	memcpy(string->chars, chars, length);
+	string->chars[length] = '\0';
+
+	return string;
 }
 
 haw_string* concatenate(haw_string* a, haw_string* b)
