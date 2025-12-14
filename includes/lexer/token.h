@@ -2,6 +2,7 @@
 #define haw_token
 
 #include "share/string.h"
+#include "value/obj.h"
 
 #include <limits.h>
 #include <share/common.h>
@@ -60,7 +61,7 @@ typedef union
 {
 	haw_number num_;
 	haw_int	   int_;
-	String*	   str_;
+	ObjString* str_;
 } SemInfo;
 
 typedef struct

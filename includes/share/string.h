@@ -22,6 +22,7 @@ typedef struct
 	base_char_mut* value;
 } str;
 
+#undef this
 #define this str* string
 #define this_t str
 

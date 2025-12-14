@@ -1,22 +1,23 @@
 #ifndef haw_value_h
 #define haw_value_h
 
-#include "share/string.h"
+#include "obj.h"
 
-#include <stdio.h>
+#include <stdint.h>
 #include <type/type.h>
+
+#define MODULE_NAME "value"
 
 // values of all types are first-class values: we can store them
 // in global variables, local variables and table fields, pass them as arguments to
 // functions, return them from functions, etc.
-// strings like userdata and gcobject will stored as a reference
 typedef union
 {
 	// gcobject in bright future...
 	// function...
 	haw_int	   int_;	// integer
 	haw_number number_; // float/double
-	String*	   str_;	// string
+	Obj*	   obj_;
 } Value;
 
 // tagged values like in lua
@@ -26,46 +27,70 @@ typedef struct
 	HawType type;
 } TValue;
 
-#define t_isint(o) ((o)->type == HAW_TINT)
-#define t_isnumber(o) ((o)->type == HAW_TNUMBER)
-#define t_isstring(o) ((o)->type == HAW_TSTRING)
-#define t_isvoid(o) ((o)->type == HAW_TVOID)
-#define t_isvoid(o) ((o)->type == HAW_TVOID)
-#define t_isvalid(o) ((o)->type > HAW_TNONE)
-#define t_issame(a, b) ((a)->type == (b)->type)
+#define checktype(t1, t2) ((t1) == (t2))
+#define val_(o) ((o))
+
+#define t_objtype(o) (obj_value(o)->type)
+#define t_isobjtype(o, t) (t_objtype(o) == t)
+
+#define t_isint(o) checktype(val_(o)->type, HAW_TINT)
+#define t_isnumber(o) checktype(val_(o)->type, HAW_TNUMBER)
+#define t_isobject(o) checktype(val_(o)->type, HAW_TOBJECT)
+#define t_isvoid(o) checktype(val_(o)->type, HAW_TVOID)
+
+#define t_isvalid(o) (val_(o)->type > HAW_TNONE)
 
 #define t_isrational(o) (t_isnumber(o) || t_isint(o))
 
 #define int_value(o) (o)->value_.int_
 #define number_value(o) (o)->value_.number_
-#define string_value(o) (o)->value_.str_
+#define string_value(o) ((ObjString*) (o)->value_.obj_)
+#define cstring_value(o) string_value(o)->chars
 
-#define setnvalue(o, v) (o)->value_.number_ = v
-#define setivalue(o, v) (o)->value_.int_ = v
+#define obj_value(o) (o)->value_.obj_
+#define t_issame_objtype(a, b) (obj_value(a)->type == obj_value(b)->type)
+#define t_issame(a, b)                                                                             \
+	(t_isvalid(a) && t_isvalid(b)) &&                                                              \
+		(checktype(val_(a)->type, val_(b)->type) || t_issame_objtype(a, b))
 
-static void print_value(const TValue* value)
-{
-	if (t_isint(value))
-	{
-		printf("%d", int_value(value));
-	}
-	else if (t_isnumber(value))
-	{
-		printf("%g", number_value(value));
-	}
-	else if (t_isstring(value))
-	{
-		String_print(string_value(value));
-	}
-	else if (t_isvoid(value))
-	{
-		printf("<void>");
-	}
-}
+#define obj_type(o) obj_value(o)->type
 
-static inline haw_number val_to_num(TValue* v)
+#define t_isstring(o) is_objtype(o, OBJ_STRING)
+
+#define setnvalue(o, v) number_value(o) = v
+#define setivalue(o, v) int_value(o) = v
+#define setovalue(o, v) obj_value(o) = (Obj*) v
+
+#define set_objtype(o, t) obj_value(o)->type = t
+
+void print_value(const TValue* value);
+
+static inline haw_number val_to_num(const TValue* v)
 {
 	return t_isint(v) ? (haw_number) int_value(v) : number_value(v);
+}
+
+static inline bool is_objtype(const TValue* value, ObjType type)
+{
+	return t_isobject(value) && obj_value(value)->type == type;
+}
+
+int valuecmp(const TValue* left, const TValue* right);
+int valueeq(const TValue* left, const TValue* right);
+
+static inline int t_istruth(const TValue* v)
+{
+	switch (v->type)
+	{
+	case HAW_TINT:
+		return int_value(v) != 0;
+	case HAW_TNUMBER:
+		return number_value(v) != 0.0;
+	case HAW_TOBJECT:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 #endif //! haw_value_h

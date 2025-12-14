@@ -1,5 +1,6 @@
 #include "chunk/opcodes.h"
 #include "type/type.h"
+#include "value/obj.h"
 #include "value/value.h"
 
 #undef this
@@ -23,6 +24,12 @@ static void next()
 {
 	p.previous = p.current;
 	p.current  = lex(p.ls);
+#if SLS_DEBUGL
+	if (p.current.type != TK_EOF)
+	{
+		dislex(p.ls, p.current.type);
+	}
+#endif
 }
 
 static void consumef(TokenType type, cstr msg)
@@ -307,32 +314,31 @@ static void grouping()
 static void literal()
 {
 	TValue result;
-	Value  val;
-
 	switch (p.previous.type)
 	{
 	case TK_NUMBER:
-		val.number_ = seminf->num_;
+		setnvalue(&result, seminf->num_);
 		result.type = HAW_TNUMBER;
 		break;
 	case TK_BOOL:
 	case TK_INT:
-		val.int_	= seminf->int_;
 		result.type = HAW_TINT;
+		setivalue(&result, seminf->int_);
 		break;
 	case TK_STRING:
-		val.str_	= seminf->str_;
-		result.type = HAW_TSTRING;
+		setovalue(&result, seminf->str_);
+		obj_type(&result) = OBJ_STRING;
+		result.type		  = HAW_TOBJECT;
+
 		break;
 	case TK_CHAR:
-		val.int_	= *seminf->str_->value;
-		result.type = HAW_TINT;
+		(&result)->value_.int_ = p.ls->seminfo->str_->chars[0];
+		result.type			   = HAW_TINT;
 		break;
 	default:
 		expected("expression");
 	}
 
-	result.value_ = val;
 	write_constant(&p.chunk, result);
 }
 
@@ -353,15 +359,17 @@ void parse(str* filename)
 	lex_init(p.ls, filename, &seminfo);
 	next();
 
-	for (dislex(p.ls, p.current.type); p.current.type != TK_EOF; stmt())
+	for (; p.current.type != TK_EOF; stmt())
 	{
 	}
 
+	printf("\n");
+#if SLS_DEBUGL
 	printf("\n"); // END debug seq
-	halt();
-#ifdef DISASSEMBLE
-	disassemble(&p.chunk);
 #endif
+
+	disassemble(&p.chunk);
+	halt();
 
 	lex_destroy(p.ls);
 }

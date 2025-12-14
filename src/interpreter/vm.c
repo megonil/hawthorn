@@ -169,39 +169,46 @@ void vm_execute()
 			macroend();
 		}
 
-#define boolopr(t, op)                                                                             \
+#define compopr(t, f)                                                                              \
 	case t:                                                                                        \
 	{                                                                                              \
 		macrostart();                                                                              \
+		int res = valuecmp(&a, &b);                                                                \
+		if (res == -3)                                                                             \
+		{                                                                                          \
+			error("Incompatible types for comparison");                                            \
+		}                                                                                          \
                                                                                                    \
-		if (t_isint(&a) && t_isint(&b))                                                            \
-		{                                                                                          \
-			result.type = HAW_TINT;                                                                \
-			setivalue(&result, int_value(&a) op int_value(&b));                                    \
-		}                                                                                          \
-		else if (t_isrational(&a) && t_isrational(&b))                                             \
-		{                                                                                          \
-			result.type = HAW_TINT;                                                                \
-			setivalue(&result, val_to_num(&a) op val_to_num(&b));                                  \
-		}                                                                                          \
-		else                                                                                       \
-		{                                                                                          \
-			error("Wrong operands to binary operator `==`");                                       \
-		}                                                                                          \
+		result.type = HAW_TINT;                                                                    \
+		setivalue(&result, f);                                                                     \
                                                                                                    \
 		macroend();                                                                                \
 	}
 
-			boolopr(OP_EQ, ==);
-			boolopr(OP_GE, >=);
-			boolopr(OP_GT, >);
-			boolopr(OP_LE, <=);
-			boolopr(OP_LT, <);
-			boolopr(OP_AND, &&);
-			boolopr(OP_OR, ||);
+			compopr(OP_EQ, res == 0);
+
+			compopr(OP_GE, res == 0 || res == -1);
+			compopr(OP_GT, res == -1);
+
+			compopr(OP_LE, res == 0 || res == 1);
+			compopr(OP_LT, res == 1);
+
+#define andoropr(t, op)                                                                            \
+	case t:                                                                                        \
+	{                                                                                              \
+		macrostart();                                                                              \
+		result.type = HAW_TINT;                                                                    \
+		setivalue(&result, t_istruth(&a) op t_istruth(&b));                                        \
+                                                                                                   \
+		macroend();                                                                                \
+	}
+
+			andoropr(OP_AND, &&);
+			andoropr(OP_OR, ||);
 
 #undef binopr
-#undef boolopr
+#undef andoropr
+#undef compopr
 #undef macrostart
 #undef macroend
 		}

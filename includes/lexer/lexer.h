@@ -35,11 +35,7 @@ void  lex_setintput(this, str* source_name);
 
 cstr_mut tok_2str(cstr_mut s, lexer_char token);
 
-#if SLS_DEBUGL
-
 void dislex(this, lexer_char token);
-
-#endif
 
 #endif // !haw_lexer
 #undef this

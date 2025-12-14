@@ -1,5 +1,6 @@
 #include "lexer/token.h"
 #include "type/type.h"
+#include "value/obj.h"
 #include "value/value.h"
 
 #include <assert.h>
@@ -17,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#undef MODULE_NAME
 #define MODULE_NAME "lexer"
 
 #undef this
@@ -174,7 +176,7 @@ static lexer_char keyword_or_name(this)
 
 	if (ch == 0)
 	{
-		ls->seminfo->str_ = &ls->buffer;
+		ls->seminfo->str_ = copy_string(ls->buffer.value, ls->buffer.length);
 		return TK_NAME;
 	}
 
@@ -284,7 +286,7 @@ static void read_string(this, SemInfo* seminfo)
 	}
 	advance(ls); // "
 
-	make_String(seminfo->str_, ls->buffer.value);
+	seminfo->str_ = copy_string(ls->buffer.value, ls->buffer.length);
 }
 
 static lexer_char read_numeral(this, SemInfo* seminfo)
@@ -435,6 +437,26 @@ Token lex(this)
 				result_tset('+');
 			}
 
+		case '&':
+			advance(ls); // &
+			if (check_next1(ls, '&'))
+			{
+				result_tset(TK_AND);
+			}
+			else
+			{
+				result_tset('&');
+			}
+		case '|':
+			advance(ls); // |
+			if (check_next1(ls, '|'))
+			{
+				result_tset(TK_OR);
+			}
+			else
+			{
+				result_tset('|');
+			}
 		case '-':
 			advance(ls); // -
 			if (check_next1(ls, '-'))

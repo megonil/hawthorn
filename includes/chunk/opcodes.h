@@ -73,6 +73,8 @@ static const char* opnames[NUM_OPCODES] = {
 	[OP_LE]			   = "LE",
 	[OP_LT]			   = "LT",
 	[OP_EQ]			   = "EQ",
+	[OP_AND]		   = "AND",
+	[OP_OR]			   = "OR",
 };
 
 typedef enum
