@@ -320,7 +320,7 @@ static void read_escape(this)
 	save(ls, c);
 }
 
-static void read_string(this, SemInfo* seminfo)
+static void read_string(this)
 {
 	assert(ls->current == '"');
 	advance(ls); // "
@@ -345,10 +345,10 @@ static void read_string(this, SemInfo* seminfo)
 	}
 	advance(ls); // "
 
-	seminfo->str_ = copy_string(ls->buffer.value, ls->buffer.length);
+	ls->seminfo->str_ = copy_string(ls->buffer.value, ls->buffer.length);
 }
 
-static lexer_char read_numeral(this, SemInfo* seminfo)
+static lexer_char read_numeral(this)
 {
 	assert(isdigit(ls->current));
 	save_and_next(ls);
@@ -368,12 +368,12 @@ static lexer_char read_numeral(this, SemInfo* seminfo)
 
 	if (t == 1)
 	{
-		seminfo->int_ = int_value(&obj);
+		ls->seminfo->int_ = int_value(&obj);
 		return TK_INT;
 	}
 	else
 	{
-		seminfo->num_ = number_value(&obj);
+		ls->seminfo->num_ = number_value(&obj);
 		return TK_NUMBER;
 	}
 }
@@ -508,7 +508,7 @@ Token lex(this)
 			}
 #undef doubletok
 		case '"':
-			read_string(ls, ls->seminfo);
+			read_string(ls);
 			result_tset(TK_STRING);
 			break;
 
@@ -548,7 +548,7 @@ Token lex(this)
 		case '8':
 		case '9':
 		{
-			result_tset(read_numeral(ls, ls->seminfo));
+			result_tset(read_numeral(ls));
 			break;
 		}
 
