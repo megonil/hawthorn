@@ -32,6 +32,7 @@ typedef struct ObjString haw_string;
 // work with strings
 haw_string* copy_string(const char* chars, int length);
 haw_string* concatenate(haw_string* a, haw_string* b);
+haw_string* allocate_string(char* chars, int length);
 
 // general use
 void free_objects();

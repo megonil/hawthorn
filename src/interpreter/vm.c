@@ -4,6 +4,7 @@
 #include "chunk/opcodes.h"
 #include "lexer/lexer.h"
 #include "share/array.h"
+#include "share/string.h"
 #include "type/type.h"
 #include "value/obj.h"
 #include "value/value.h"
@@ -109,8 +110,47 @@ void vm_execute()
 	}
 			binopr(OP_ADD, +, '+');
 			binopr(OP_SUB, -, '-');
-			binopr(OP_MUL, *, '*');
 			binopr(OP_DIV, /, '/');
+
+		case OP_MUL:
+		{
+			macrostart();
+
+			if (t_isint(&a) && t_isint(&b))
+			{
+				result.type = HAW_TINT;
+				setivalue(&result, int_value(&a) % int_value(&b));
+			}
+			else if (t_isrational(&a) && t_isrational(&b))
+			{
+				result.type = HAW_TNUMBER;
+				setnvalue(&result, val_to_num(&a) * val_to_num(&b));
+			}
+			else if (t_isstring(&a) && t_isint(&b))
+			{
+				result.type		  = HAW_TOBJECT;
+				obj_type(&result) = OBJ_STRING;
+
+				String res;
+				make_Stringl(&res, string_value(&a)->chars, string_value(&a)->length); // copy
+
+				for (size_t i = 0; i < int_value(&b); i++)
+				{
+					String_append(&res, string_value(&a)->chars);
+				}
+
+				haw_string* new_str = allocate_string(res.value, res.length);
+				String_destroy(&res);
+
+				setovalue(&result, new_str);
+			}
+			else
+			{
+				wrongoperandsc('*');
+			}
+
+			macroend();
+		}
 
 		case OP_MOD:
 		{
