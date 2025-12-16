@@ -36,6 +36,9 @@ typedef struct
 
 #define array_reserve(ARR, n, T) ARR = array_res(ARR, (n), sizeof(T))
 
+#define array_incsize(ARR) array_size(ARR)++;
+
+#define array_ensure(ARR, count, size) ARR = array_ensure_capacity(ARR, count, size);
 // main functions
 void* array_init(size_t item_size, size_t capacity);
 void* array_get(void* array, size_t index);

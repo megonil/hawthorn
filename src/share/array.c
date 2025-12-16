@@ -78,7 +78,7 @@ void* array_res(void* array, size_t n, size_t item_size)
 
 	header = realloc(header, sizeof(ArrayHeader) + new_capacity * item_size);
 
-	if (!header)
+	if (header == NULL)
 	{
 		error("array_reserve: realloc failed");
 		return NULL;

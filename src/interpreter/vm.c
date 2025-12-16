@@ -4,6 +4,7 @@
 #include "chunk/opcodes.h"
 #include "lexer/lexer.h"
 #include "share/array.h"
+#include "share/table.h"
 #include "type/type.h"
 #include "value/obj.h"
 #include "value/value.h"
@@ -33,6 +34,8 @@ void vm_init(Chunk* chunk)
 	v.chunk	  = chunk;
 	v.pc	  = 0;
 	v.objects = NULL;
+
+	table_init(&v.strings);
 }
 
 size_t chunk_size()
@@ -144,8 +147,7 @@ void vm_execute()
 
 				size_t chars_size = sizeof(char) * (total + 1);
 
-				haw_string* string =
-					allocate_obj_fam(sizeof(*string) + chars_size, haw_string, OBJ_STRING);
+				haw_string* string = take_string(string_value(&a)->chars, len);
 
 				string->length = total;
 				string->chars  = (char*) (string + 1);
@@ -294,6 +296,7 @@ void vm_destroy()
 	chunk_destroy(v.chunk);
 	free_objects();
 	array_free(v.stack);
+	table_destroy(&v.strings);
 }
 
 #undef pop

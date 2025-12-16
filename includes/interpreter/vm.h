@@ -1,4 +1,5 @@
 #include "chunk/chunk.h"
+#include "share/table.h"
 #include "value/value.h"
 
 #include <stddef.h>
@@ -9,6 +10,7 @@ typedef struct
 {
 	Chunk*	chunk;
 	TValue* stack;
+	Table	strings;
 	Obj*	objects;
 
 	size_t pc; // Program Counter

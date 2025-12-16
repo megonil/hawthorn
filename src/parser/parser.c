@@ -336,17 +336,17 @@ static void literal()
 
 		break;
 	case TK_STRING:
-		haw_string* string = copy_string(seminf->str_->chars, seminf->str_->length);
+		haw_string* string = take_string(seminf->str_->chars, seminf->str_->length);
 		setovalue(&result, string);
 
 		result.type		  = HAW_TOBJECT;
 		obj_type(&result) = OBJ_STRING;
+
 		break;
 	case TK_CHAR:
 		setivalue(&result, *seminf->str_->chars); // assign the 1st char
 		result.type = HAW_TINT;
 
-		free_object(cast_obj(seminf->str_));
 		break;
 	default:
 		expected("expression");

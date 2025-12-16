@@ -345,7 +345,7 @@ static void read_string(this)
 	}
 
 	advance(ls); // "
-	ls->seminfo->str_ = copy_string(ls->buffer.value, ls->buffer.length);
+	ls->seminfo->str_ = take_string(ls->buffer.value, ls->buffer.length);
 }
 
 static lexer_char read_numeral(this)
@@ -512,7 +512,7 @@ Token lex(this)
 				error("Expected end of char");
 			}
 
-			ls->seminfo->str_ = copy_string(ls->buffer.value, ls->buffer.length);
+			ls->seminfo->str_ = take_string(ls->buffer.value, ls->buffer.length);
 			result_tset(TK_CHAR);
 		case '0':
 		case '1':

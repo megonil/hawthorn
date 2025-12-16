@@ -1,7 +1,6 @@
 #include <complex.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <value/obj.h>
 #include <value/value.h>
 
@@ -91,13 +90,9 @@ int valueeq(const TValue* left, const TValue* right)
 			switch (obj_type(left))
 			{
 			case OBJ_STRING:
-				haw_string* a = string_value(left);
-				haw_string* b = string_value(right);
-
-				return a->length == b->length && memcmp(a, b, a->length) == 0;
+				return obj_value(left) == obj_value(right);
 			}
 		}
-
 		// TODO
 		case HAW_TFN:
 		case HAW_TTHREAD:

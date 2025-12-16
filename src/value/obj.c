@@ -1,10 +1,25 @@
+#include "share/table.h"
+#include "value/value.h"
+
 #include <interpreter/vm.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <value/obj.h>
-
 #define endstring(s, l) (s)[(l)] = '\0'
+
+static uint32_t hash_string(const char* key, int length)
+{
+	uint32_t hash = 2166136261u;
+
+	for (int i = 0; i < length; i++)
+	{
+		hash ^= (uint8_t) key[i];
+		hash *= 16777619;
+	}
+
+	return hash;
+}
 
 Obj* allocate_object(size_t size, ObjType type)
 {
@@ -17,30 +32,48 @@ Obj* allocate_object(size_t size, ObjType type)
 	return object;
 }
 
-haw_string* allocate_string(char* chars, int length)
+static haw_string* allocate_string(char* chars, int length, hash hash)
 {
 	haw_string* string =
 		allocate_obj_fam(sizeof(haw_string) + sizeof(char) * length, haw_string, OBJ_STRING);
 
 	string->length = length;
 	string->chars  = chars;
+	string->hash   = hash;
+	table_set(&v.strings, string, (TValue) {.value_ = (Value) {.number_ = 0}, .type = HAW_TNONE});
 
 	return string;
 }
 
+haw_string* take_string(char* chars, int length)
+{
+	hash		hash	 = hash_string(chars, length);
+	haw_string* interned = table_find_string(&v.strings, chars, length, hash);
+
+	if (interned != NULL)
+	{
+		return interned;
+	}
+
+	return allocate_string(chars, length, hash);
+}
+
 haw_string* copy_string(const char* chars, int length)
 {
-	size_t chars_size = sizeof(char) * (length + 1);
+	hash		hash	 = hash_string(chars, length);
+	haw_string* interned = table_find_string(&v.strings, chars, length, hash);
 
-	haw_string* string = allocate_obj_fam(sizeof(*string) + chars_size, haw_string, OBJ_STRING);
+	if (interned != NULL)
+	{
+		return interned;
+	}
 
-	string->length = length;
-	string->chars  = (char*) (string + 1);
+	char* new_chars = allocate(char, length + 1);
 
-	memcpy(string->chars, chars, length);
-	endstring(string->chars, length);
+	memcpy(new_chars, chars, length);
+	new_chars[length] = '\0';
 
-	return string;
+	return allocate_string(new_chars, length, hash);
 }
 
 haw_string* concatenate(haw_string* a, haw_string* b)

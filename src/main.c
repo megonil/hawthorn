@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <interpreter/repl.h>
 #include <interpreter/vm.h>
 #include <lexer/lexer.h>

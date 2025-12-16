@@ -1,8 +1,11 @@
 add_library(megonil_array STATIC array.c)
 add_library(megonil_error STATIC error.c)
 add_library(megonil_string STATIC string.c)
+add_library(hawthorn_table STATIC table.c)
 
 target_include_directories(megonil_array PUBLIC "${DEFAULT_INCLUDE_DIR}")
 target_link_libraries(megonil_array PRIVATE megonil_error)
 target_include_directories(megonil_error PUBLIC "${DEFAULT_INCLUDE_DIR}")
 target_include_directories(megonil_string PUBLIC "${DEFAULT_INCLUDE_DIR}")
+target_include_directories(hawthorn_table PUBLIC "${DEFAULT_INCLUDE_DIR}")
+target_link_libraries(hawthorn_table PRIVATE megonil_array)
