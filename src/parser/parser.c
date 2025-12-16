@@ -344,7 +344,7 @@ static void literal()
 
 		break;
 	case TK_CHAR:
-		setivalue(&result, *seminf->str_->chars); // assign the 1st char
+		setivalue(&result, seminf->str_->chars[0]); // assign the 1st char
 		result.type = HAW_TINT;
 
 		break;

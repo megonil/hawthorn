@@ -75,6 +75,8 @@ char buffer_read(Buffer* b);
 
 void buffer_destroy(Buffer* b);
 
+cstr_mut String_take_value(String* string);
+
 #undef this
 #undef this_t
 #endif // !megonil_string

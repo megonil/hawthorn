@@ -192,3 +192,14 @@ void buffer_destroy(Buffer* b)
 	b->value = NULL;
 	b->n	 = 0;
 }
+
+cstr_mut String_take_value(String* string)
+{
+	cstr_mut taken_value = string->value;
+
+	string->value	 = NULL;
+	string->length	 = 0;
+	string->capacity = 0;
+
+	return taken_value;
+}

@@ -40,6 +40,7 @@ static haw_string* allocate_string(char* chars, int length, hash hash)
 	string->length = length;
 	string->chars  = chars;
 	string->hash   = hash;
+
 	table_set(&v.strings, string, (TValue) {.value_ = (Value) {.number_ = 0}, .type = HAW_TNONE});
 
 	return string;
