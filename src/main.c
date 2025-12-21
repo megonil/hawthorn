@@ -27,7 +27,7 @@ static flags_t getflags(int argc, char* argv[])
 	flags_t flags = 0;
 	char	c;
 
-	while ((c = getopt(argc, argv, "d::l::")) != -1)
+	while ((c = getopt(argc, argv, "d::l::s::")) != -1)
 	{
 		switch (c)
 		{
@@ -36,6 +36,9 @@ static flags_t getflags(int argc, char* argv[])
 			break;
 		case 'l':
 			setflag(DBG_LEXER);
+			break;
+		case 's':
+			setflag(SKIP_RUN);
 			break;
 		case '?':
 			printf("unrecognised option %c", optopt);
@@ -54,7 +57,11 @@ void run_file(cstr filename, flags_t flags)
 	parser_init(&p, &ls, flags);
 	parse(filename);
 
-	vm_execute();
+	if (!getflag(flags, SKIP_RUN))
+	{
+		vm_execute();
+	}
+
 	parser_destroy(&p);
 	vm_destroy();
 }
@@ -72,7 +79,7 @@ int main(int argc, char* argv[])
 
 		if (access(filename, F_OK) != 0)
 		{
-			fprintf(stderr, "can not open file %s\n", filename);
+			fprintf(stderr, "cannot open file %s\n", filename);
 			usage();
 			exit(1);
 		}

@@ -58,7 +58,8 @@ static void constant_instruction(Chunk* chunk, int* offset)
 static void constantlong_instruction(Chunk* chunk, int* offset)
 {
 	uint32_t index =
-		from_u24(chunk->code[*offset + 1], chunk->code[*offset + 2], chunk->code[*offset + 3]);
+		from_u24(chunk->code[*offset + 1], chunk->code[*offset + 2],
+				 chunk->code[*offset + 3]);
 
 	printf("%04d %s %3u (", *offset, op_name(OP_CONSTANT_LONG), index);
 
@@ -82,7 +83,8 @@ static void onearg_instruction(Chunk* chunk, int* offset, int wide)
 	if (wide)
 	{
 		index =
-			from_u24(chunk->code[*offset + 1], chunk->code[*offset + 2], chunk->code[*offset + 3]);
+			from_u24(chunk->code[*offset + 1], chunk->code[*offset + 2],
+					 chunk->code[*offset + 3]);
 		jump = 4;
 	}
 	else
@@ -133,8 +135,8 @@ void disassemble(Chunk* chunk)
 			simple_instruction(chunk->code[offset], &offset);
 			continue;
 		case OP_SETGLOBAL:
-			onearg_instruction(chunk, &offset, wide);
-			break;
+		case OP_SETLOCAL:
+		case OP_LOADLOCAL:
 		case OP_LOADGLOBAL:
 			onearg_instruction(chunk, &offset, wide);
 			break;

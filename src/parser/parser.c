@@ -7,6 +7,7 @@
 #include "value/value.h"
 
 #include <stdint.h>
+#include <string.h>
 
 #undef this
 #include <chunk/chunk.h>
@@ -33,6 +34,12 @@ this;
 #define expecteds(m) errorf("Expected %s", m)
 
 #define seminf p.current.seminfo
+#define tsem(a) (a)->seminfo
+#define tstr(a) tsem(a).str_
+#define pscopes p.scopes
+
+#define pop() emit_byte(&p.chunk, OP_POP)
+#define halt() emit_byte(&p.chunk, OP_HALT)
 
 static inline void next()
 {
@@ -66,6 +73,11 @@ static inline void consume(TokenType type)
 	}
 
 	errorf("Expected %s", tok_2str(type));
+}
+
+static inline int names_equal(Token* a, Token* b)
+{
+	return tstr(a) == tstr(b);
 }
 
 static inline haw_string* parse_name(Token* token)
@@ -147,6 +159,55 @@ static inline int compile_name(Token* token)
 	return name_constant(var_name);
 }
 
+static inline void add_local(Token* name)
+{
+	if (p.scopes.local_count == UINT8_MAX)
+	{
+		error("too many local variables");
+	}
+
+	Local* local = &pscopes.locals[pscopes.local_count++];
+	local->name	 = *name;
+	local->depth = -1;
+}
+
+static void decl_var(Token* name)
+{
+	if (pscopes.scopes_deep == 0)
+	{
+		return;
+	}
+
+	for (int i = pscopes.local_count - 1; i >= 0; i--)
+	{
+		Local* local = &pscopes.locals[i];
+		if (local->depth != -1 && local->depth < pscopes.scopes_deep)
+		{
+			break;
+		}
+
+		if (names_equal(name, &local->name))
+		{
+			error("");
+		}
+	}
+
+	add_local(name);
+}
+
+static inline int parse_variable(Token* token)
+{
+	int arg = compile_name(token);
+
+	decl_var(token);
+	if (pscopes.scopes_deep > 0)
+	{
+		return -1;
+	}
+
+	return arg;
+}
+
 static inline void var(int arg, OpCode opcode)
 {
 	if (arg <= UINT8_MAX)
@@ -160,7 +221,19 @@ static inline void var(int arg, OpCode opcode)
 	}
 }
 
-#define def_var(a) var(a, OP_SETGLOBAL)
+static inline void def_var(int arg)
+{
+	if (arg == -1)	 // local
+	{
+		pscopes.locals[pscopes.local_count - 1].depth =
+			pscopes.scopes_deep;
+		return;
+	}
+
+	var(arg, OP_SETGLOBAL);
+	pop();
+}
+
 #define load_var(a) var(a, OP_LOADGLOBAL)
 
 // Statements
@@ -170,6 +243,7 @@ dstmt(stmt);
 
 dstmt(vardeclstat);
 dstmt(printstat);
+dstmt(scopestat);
 
 // Expressions
 #define dexpr(s) static void s(int can_assign)
@@ -298,6 +372,9 @@ static void stmt()
 	case TK_PRINT:
 		printstat();
 		break;
+	case '{':
+		scopestat();
+		break;
 
 	default:
 		expr_stmt();
@@ -309,7 +386,7 @@ static void vardeclstat()
 {
 	next();	  // skip `set`
 
-	int arg = compile_name(&p.current);
+	int arg = parse_variable(&p.current);
 	next();
 
 	int init = match('=');
@@ -324,7 +401,6 @@ static void vardeclstat()
 	}
 
 	def_var(arg);
-	emit_byte(&p.chunk, OP_POP);
 }
 
 static void printstat()
@@ -334,10 +410,40 @@ static void printstat()
 	emit_byte(&p.chunk, OP_PRINT);
 }
 
+#define scope_begin() pscopes.scopes_deep++
+
+static void scope_end()
+{
+	pscopes.scopes_deep--;
+
+	while (pscopes.local_count > 0 &&
+		   pscopes.locals[pscopes.local_count - 1].depth >
+			   pscopes.scopes_deep)
+	{
+		pop();
+		pscopes.local_count--;
+	}
+}
+
+static inline void scopestat()
+{
+	next();
+	scope_begin();
+
+	while (p.current.type != TK_EOF && p.current.type != '}')
+	{
+		decl();
+	}
+
+	scope_end();
+
+	consume('}');
+}
+
 static inline void expr_stmt()
 {
 	expr(1);
-	emit_byte(&p.chunk, OP_POP);   // TODO: implicit OP_RETURN
+	pop();	 // TODO: implicit OP_RETURN
 }
 
 // Exprs
@@ -375,19 +481,54 @@ static void prec(Precedence prec)
 	}
 }
 
+static int resolve_local(Token* name)
+{
+	for (int i = pscopes.local_count - 1; i >= 0; i--)
+	{
+		Local* local = &pscopes.locals[i];
+		if (names_equal(name, &local->name))
+		{
+			if (local->depth == -1)
+			{
+				error(
+					"Cannot read local variable in it's own initializer");
+			}
+
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 static void name(int can_assign)
 {
-	int arg = compile_name(&p.previous);
+	int		is_local = resolve_local(&p.previous);
+	int		arg;
+	uint8_t get, set;
+
+	if (is_local != -1)
+	{
+		get = OP_LOADLOCAL;
+		set = OP_SETLOCAL;
+		arg = is_local;
+	}
+	else
+	{
+		get = OP_LOADGLOBAL;
+		set = OP_SETGLOBAL;
+		arg = compile_name(&p.previous);
+	}
 
 	if (can_assign && match('='))
 	{
 		expr(1);
 
-		def_var(arg);
+		var(arg, set);
 	}
 	else
 	{
-		load_var(arg);
+		var(arg, get);
 	}
 }
 
@@ -524,14 +665,13 @@ static void literal(int can_assign)
 
 void parser_init(Parser* p, LexState* sls, flags_t flags)
 {
-	p->ls		   = sls;
-	p->scopes_deep = 0;
-	p->flags	   = flags;
+	p->ls				  = sls;
+	p->scopes.scopes_deep = 0;
+	p->scopes.local_count = 0;
+	p->flags			  = flags;
 
 	chunk_init(&p->chunk);
 }
-
-#define halt() emit_byte(&p.chunk, OP_HALT)
 
 void parse(cstr filename)
 {
@@ -570,4 +710,6 @@ void parser_destroy(Parser* p)
 	lex_destroy(p->ls);
 }
 
+#undef pop
+#undef halt
 #undef this

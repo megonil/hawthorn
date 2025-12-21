@@ -18,9 +18,7 @@
 #undef MODULE_NAME
 #endif
 #define MODULE_NAME "vm"
-
 vm v;
-
 #define constants (v.chunk->constants)
 #define code (v.chunk->code)
 
@@ -29,22 +27,24 @@ vm v;
 
 #define read_byte() code[v.pc++]
 
-#define read_u24()                                                                                 \
-	((v.pc += 3), (uint32_t) code[v.pc - 3] | ((uint32_t) code[v.pc - 2] << 8) |                   \
+#define read_u24()                                                        \
+	((v.pc += 3), (uint32_t) code[v.pc - 3] |                             \
+					  ((uint32_t) code[v.pc - 2] << 8) |                  \
 					  ((uint32_t) code[v.pc - 1] << 16))
 
-#define read_wide()                                                                                \
-	if (wide)                                                                                      \
-	{                                                                                              \
-		index = read_u24();                                                                        \
-	}                                                                                              \
-	else                                                                                           \
-	{                                                                                              \
-		index = read_byte();                                                                       \
-	}                                                                                              \
+#define read_wide()                                                       \
+	if (wide)                                                             \
+	{                                                                     \
+		index = read_u24();                                               \
+	}                                                                     \
+	else                                                                  \
+	{                                                                     \
+		index = read_byte();                                              \
+	}                                                                     \
 	wide = 0;
 
-#define wrongoperandsc(operand) errorf("Wrong operands to binary operator `%c`", operand)
+#define wrongoperandsc(operand)                                           \
+	errorf("Wrong operands to binary operator `%c`", operand)
 
 void vm_init(Chunk* chunk)
 {
@@ -67,7 +67,7 @@ size_t chunk_size()
 void vm_execute()
 {
 	int index;
-	int wide = 0; // wide flag
+	int wide = 0;	// wide flag
 
 	for (;;)
 	{
@@ -132,43 +132,58 @@ void vm_execute()
 			break;
 		}
 
+		case OP_SETLOCAL:
+		{
+			read_wide();
+			v.stack[index] = v.stack[array_size(v.stack) - 1];
+
+			break;
+		}
+		case OP_LOADLOCAL:
+		{
+			read_wide();
+			push(v.stack[index]);
+
+			break;
+		}
+
 		case OP_POP:
 			pop();
 			break;
 
 			// Binary Operators
-#define macrostart()                                                                               \
-	TValue result;                                                                                 \
-	TValue b = pop();                                                                              \
+#define macrostart()                                                      \
+	TValue result;                                                        \
+	TValue b = pop();                                                     \
 	TValue a = pop()
 
-#define macroend()                                                                                 \
-	push(result);                                                                                  \
+#define macroend()                                                        \
+	push(result);                                                         \
 	break;
 
-#define binopr(t, op, ch)                                                                          \
-	case t:                                                                                        \
-	{                                                                                              \
-		macrostart();                                                                              \
-                                                                                                   \
-		if (t_isrational(&a) && t_isrational(&b))                                                  \
-		{                                                                                          \
-			if (t_isint(&a) && t_isint(&b))                                                        \
-			{                                                                                      \
-				result.type = HAW_TINT;                                                            \
-				setivalue(&result, int_value(&a) op int_value(&b));                                \
-			}                                                                                      \
-			else                                                                                   \
-			{                                                                                      \
-				result.type = HAW_TNUMBER;                                                         \
-				setnvalue(&result, val_to_num(&a) op val_to_num(&b));                              \
-			}                                                                                      \
-		}                                                                                          \
-		else                                                                                       \
-		{                                                                                          \
-			wrongoperandsc(ch);                                                                    \
-		}                                                                                          \
-		macroend();                                                                                \
+#define binopr(t, op, ch)                                                 \
+	case t:                                                               \
+	{                                                                     \
+		macrostart();                                                     \
+                                                                          \
+		if (t_isrational(&a) && t_isrational(&b))                         \
+		{                                                                 \
+			if (t_isint(&a) && t_isint(&b))                               \
+			{                                                             \
+				result.type = HAW_TINT;                                   \
+				setivalue(&result, int_value(&a) op int_value(&b));       \
+			}                                                             \
+			else                                                          \
+			{                                                             \
+				result.type = HAW_TNUMBER;                                \
+				setnvalue(&result, val_to_num(&a) op val_to_num(&b));     \
+			}                                                             \
+		}                                                                 \
+		else                                                              \
+		{                                                                 \
+			wrongoperandsc(ch);                                           \
+		}                                                                 \
+		macroend();                                                       \
 	}
 			binopr(OP_ADD, +, '+');
 			binopr(OP_SUB, -, '-');
@@ -253,7 +268,8 @@ void vm_execute()
 			if (t_isint(&a) && t_isint(&b))
 			{
 				result.type = HAW_TINT;
-				setivalue(&result, cast_hawint(int_value(&a) / int_value(&b)));
+				setivalue(&result,
+						  cast_hawint(int_value(&a) / int_value(&b)));
 			}
 			else if (t_isrational(&a) && t_isrational(&b))
 			{
@@ -285,20 +301,20 @@ void vm_execute()
 			macroend();
 		}
 
-#define compopr(t, f)                                                                              \
-	case t:                                                                                        \
-	{                                                                                              \
-		macrostart();                                                                              \
-		int res = valuecmp(&a, &b);                                                                \
-		if (res == -3)                                                                             \
-		{                                                                                          \
-			error("Incompatible types for comparison");                                            \
-		}                                                                                          \
-                                                                                                   \
-		result.type = HAW_TINT;                                                                    \
-		setivalue(&result, f);                                                                     \
-                                                                                                   \
-		macroend();                                                                                \
+#define compopr(t, f)                                                     \
+	case t:                                                               \
+	{                                                                     \
+		macrostart();                                                     \
+		int res = valuecmp(&a, &b);                                       \
+		if (res == -3)                                                    \
+		{                                                                 \
+			error("Incompatible types for comparison");                   \
+		}                                                                 \
+                                                                          \
+		result.type = HAW_TINT;                                           \
+		setivalue(&result, f);                                            \
+                                                                          \
+		macroend();                                                       \
 	}
 
 			compopr(OP_EQ, res == 0);
@@ -309,14 +325,14 @@ void vm_execute()
 			compopr(OP_LE, res == 0 || res == 1);
 			compopr(OP_LT, res == 1);
 
-#define andoropr(t, op)                                                                            \
-	case t:                                                                                        \
-	{                                                                                              \
-		macrostart();                                                                              \
-		result.type = HAW_TINT;                                                                    \
-		setivalue(&result, v_istruth(&a) op v_istruth(&b));                                        \
-                                                                                                   \
-		macroend();                                                                                \
+#define andoropr(t, op)                                                   \
+	case t:                                                               \
+	{                                                                     \
+		macrostart();                                                     \
+		result.type = HAW_TINT;                                           \
+		setivalue(&result, v_istruth(&a) op v_istruth(&b));               \
+                                                                          \
+		macroend();                                                       \
 	}
 
 			andoropr(OP_AND, &&);
@@ -333,7 +349,8 @@ void vm_execute()
 			}
 
 			result.type = HAW_TOBJECT;
-			setovalue(&result, concatenate(string_value(&a), string_value(&b)));
+			setovalue(&result,
+					  concatenate(string_value(&a), string_value(&b)));
 			obj_type(&result) = OBJ_STRING;
 
 			macroend();

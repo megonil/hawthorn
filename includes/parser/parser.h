@@ -9,10 +9,23 @@
 
 typedef struct
 {
-	int		scopes_deep;
+	Token name;
+	int	  depth;
+} Local;
+
+typedef struct
+{
+	Local locals[UINT8_MAX + 1];
+	int	  local_count;
+	int	  scopes_deep;
+} Scopes;
+
+typedef struct
+{
 	flags_t flags;
 
-	Chunk chunk;
+	Chunk  chunk;
+	Scopes scopes;
 
 	Token	  previous;
 	Token	  current;
@@ -30,13 +43,13 @@ void parser_destroy(Parser* p);
 typedef enum : uint8_t
 {
 	PREC_NONE,
-	PREC_ASSIGNMENT, // =
-	PREC_OR,		 // or
-	PREC_AND,		 // and
-	PREC_EQ,		 // == !=
-	PREC_COMPARISON, // < > <= >=
-	PREC_TERM,		 // + -
-	PREC_FACTOR,	 // * / //
+	PREC_ASSIGNMENT,   // =
+	PREC_OR,		   // or
+	PREC_AND,		   // and
+	PREC_EQ,		   // == !=
+	PREC_COMPARISON,   // < > <= >=
+	PREC_TERM,		   // + -
+	PREC_FACTOR,	   // * / //
 	PREC_UNARY,
 	PREC_CALL,
 	PREC_PRIMARY,
@@ -53,4 +66,4 @@ typedef struct
 
 #define def_parser() extern this
 
-#endif // !haw_parser
+#endif	 // !haw_parser

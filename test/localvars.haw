@@ -1,0 +1,13 @@
+set abc = "1234"
+
+{
+	set abc = 10
+	set abc2
+
+	print abc \\ 10
+	abc = abc2 = 100
+
+	print abc2 \\ 100
+}
+
+print abc

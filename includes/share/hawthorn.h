@@ -27,14 +27,15 @@ typedef enum : flags_t
 {
 	DBG_DISASM,
 	DBG_LEXER,
+	SKIP_RUN,
 } Flags;
 
 #define setflag(f) flags = (1 << f) | flags
 #define unsetflag(f) flags = flags & (~(1 << f))
-#define getflag(fls, f) (fls >> f) & 1
+#define getflag(fls, f) ((fls >> f) & 1)
 
 #if !defined(HAWI_FUNC)
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) &&                             \
+#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 302) &&    \
 	(defined(__ELF__) || defined(__MACH__))
 #define HAWI_FUNC __attribute__((visibility("internal"))) extern
 #else
@@ -43,4 +44,4 @@ typedef enum : flags_t
 
 #define INT_BITS 32
 #endif
-#endif // !hawthorn_h
+#endif	 // !hawthorn_h
