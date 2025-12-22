@@ -26,7 +26,7 @@ typedef struct
 #undef this
 #define this LexState* ls
 
-void lex_init(this, cstr source_name, SemInfo* seminfo);
+void lex_init(this, cstr source, SemInfo* seminfo);
 void lex_destroy(this);
 
 Token lex(this);

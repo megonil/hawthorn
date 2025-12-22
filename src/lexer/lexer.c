@@ -182,8 +182,8 @@ static lexer_char keyword_or_name(this)
 
 	if (ch == 0)
 	{
-		ls->seminfo->str_ = take_string(String_take_value(&ls->buffer),
-										ls->buffer.length, NULL);
+		ls->seminfo->str_ =
+			copy_string(ls->buffer.value, ls->buffer.length, NULL);
 		return TK_NAME;
 	}
 
@@ -352,8 +352,8 @@ static void read_string(this)
 	}
 
 	advance(ls);   // "
-	ls->seminfo->str_ = take_string(String_take_value(&ls->buffer),
-									ls->buffer.length, NULL);
+	ls->seminfo->str_ =
+		copy_string(ls->buffer.value, ls->buffer.length, NULL);
 }
 
 static lexer_char read_numeral(this)
@@ -521,8 +521,8 @@ Token lex(this)
 				error("Expected end of char");
 			}
 
-			ls->seminfo->str_ = take_string(String_take_value(&ls->buffer),
-											ls->buffer.length, NULL);
+			ls->seminfo->str_ =
+				copy_string(ls->buffer.value, ls->buffer.length, NULL);
 			result_tset(TK_CHAR);
 		case '0':
 		case '1':
@@ -584,19 +584,11 @@ void dislex(this, lexer_char token)
 		dislex_lastline = ls->line_number;
 	}
 
-	if (token < FIRST_RESERVED && isprint(token))	// single byte symbols?
-	{
-		printf("%c ", token);
-	}
-
-	else
-	{
-		const char* s = tok_2str(token);
-		printf("%s ", s);
-	}
+	const char* s = tok_2str(token);
+	printf("%s ", s);
 }
 
-#define MAX_TOKEN_BUFF 32
+#define MAX_TOKEN_BUFF 16
 
 cstr_mut tok_2str(lexer_char token)
 {

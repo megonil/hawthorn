@@ -49,7 +49,7 @@ static void getflags(int argc, char* argv[])
 	}
 }
 
-cstr readfile(cstr filename)
+char* const readfile(cstr filename)
 {
 	FILE* file = fopen(filename, "rb");
 
@@ -62,7 +62,7 @@ cstr readfile(cstr filename)
 	fseek(file, 0L, SEEK_END);
 	size_t file_size = ftell(file);
 
-	char* value = (char*) malloc(sizeof(char) * file_size);
+	char* value = (char*) malloc(sizeof(char) * (file_size + 1));
 
 	rewind(file);
 
@@ -75,15 +75,16 @@ cstr readfile(cstr filename)
 	}
 
 	fclose(file);
-	value[file_size] = '\0';
+	value[file_size + 1] = '\0';
 
 	return value;
 }
 
 static void run(cstr code)
 {
+	LexState ls;
 	vm_init(&p.chunk);
-	parser_init(&p);
+	parser_init(&p, &ls);
 	parse(code);
 
 	if (!getflag(flags, SKIP_RUN))
@@ -91,12 +92,17 @@ static void run(cstr code)
 		vm_execute();
 	}
 
+	lex_destroy(&ls);
 	vm_destroy();
 }
 
 static inline void run_file(cstr filename)
 {
-	run(readfile(filename));
+	char* const source = readfile(filename);
+
+	run(source);
+
+	free(source);
 }
 
 extern jmp_buf repl_panic;
@@ -116,8 +122,9 @@ static void repl_cycle()
 	// set repl on the track
 	setflag(REPL);
 	signal(SIGINT, stop_repl);
-	parser_init(&p);
+	LexState ls;
 	vm_init(&p.chunk);
+	parser_init(&p, &ls);
 
 	char buffer[BUFFER_SIZE];
 	printf("%s %s by %s\n\n", HAW_INTERP_NAME, HAW_VERSION, HAW_AUTHOR);
@@ -153,6 +160,7 @@ static void repl_cycle()
 		parser_clean(&p);
 	}
 
+	lex_destroy(&ls);
 	vm_destroy();
 }
 

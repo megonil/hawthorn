@@ -670,10 +670,11 @@ static void literal(int can_assign)
 	write_constant(&p.chunk, result);
 }
 
-void parser_init(Parser* p)
+void parser_init(Parser* p, LexState* ls)
 {
 	p->scopes.scopes_deep = 0;
 	p->scopes.local_count = 0;
+	p->ls				  = ls;
 
 	chunk_init(&p->chunk);
 }
@@ -686,9 +687,6 @@ inline void parser_clean(Parser* p)
 
 void parse(cstr source)
 {
-	LexState ls;
-	p.ls = &ls;
-
 	SemInfo seminfo;
 	int		printlexems = getflag(flags, DBG_LEXER);
 	lex_init(p.ls, source, &seminfo);
@@ -715,9 +713,6 @@ void parse(cstr source)
 	}
 
 	halt();
-
-	lex_destroy(p.ls);
-	p.ls = NULL;
 }
 
 #undef pop

@@ -39,10 +39,12 @@ Obj* allocate_object(size_t size, ObjType type)
 	return object;
 }
 
-static haw_string* allocate_string(hash hash, int length, int* constant_index)
+static haw_string* allocate_string(hash hash, int length,
+								   int* constant_index)
 {
 	haw_string* string =
-		allocate_obj_fam(sizeof(haw_string) + sizeof(char) * (length + 1), haw_string, OBJ_STRING);
+		allocate_obj_fam(sizeof(haw_string) + sizeof(char) * (length + 1),
+						 haw_string, OBJ_STRING);
 
 	string->length = length;
 	string->hash   = hash;
@@ -62,8 +64,9 @@ static haw_string* allocate_string(hash hash, int length, int* constant_index)
 
 haw_string* take_string(char* chars, int length, int* constant_index)
 {
-	hash		hash	 = hash_string(chars, length);
-	haw_string* interned = table_find_string(&v.strings, chars, length, hash, NULL);
+	hash		hash = hash_string(chars, length);
+	haw_string* interned =
+		table_find_string(&v.strings, chars, length, hash, NULL);
 
 	if (interned != NULL)
 	{
@@ -79,8 +82,9 @@ haw_string* take_string(char* chars, int length, int* constant_index)
 
 haw_string* copy_string(char* chars, int length, int* constant_index)
 {
-	hash		hash	 = hash_string(chars, length);
-	haw_string* interned = table_find_string(&v.strings, chars, length, hash, NULL);
+	hash		hash = hash_string(chars, length);
+	haw_string* interned =
+		table_find_string(&v.strings, chars, length, hash, NULL);
 
 	if (interned != NULL)
 	{
@@ -101,20 +105,21 @@ haw_string* concatenate(haw_string* a, haw_string* b)
 	size_t chars_size = sizeof(char) * (length + 1);
 
 	haw_string* string =
-		allocate_obj_fam(sizeof(*string) + chars_size, haw_string, OBJ_STRING); // allocation
+		allocate_obj_fam(sizeof(*string) + chars_size, haw_string,
+						 OBJ_STRING);	// allocation
 
 	string->length = length;
 	string->chars  = (char*) (string + 1);
 
-	memcpy(string->chars, a->chars, a->length);				// copy
-	memcpy(string->chars + a->length, b->chars, b->length); // copy
+	memcpy(string->chars, a->chars, a->length);				  // copy
+	memcpy(string->chars + a->length, b->chars, b->length);	  // copy
 
 	endstring(string->chars, length);
 
 	string->hash = hash_string(string->chars, string->length);
 
-	haw_string* interned =
-		table_find_string(&v.strings, string->chars, string->length, string->hash, NULL);
+	haw_string* interned = table_find_string(
+		&v.strings, string->chars, string->length, string->hash, NULL);
 
 	if (interned != NULL)
 	{
