@@ -14,40 +14,40 @@ typedef enum
 	OP_CONSTANT,
 	OP_CONSTANT_LONG,
 
-	OP_ADD,	   // +
-	OP_MUL,	   // *
-	OP_SUB,	   // -
-	OP_DIV,	   // /
-	OP_MOD,	   // %
-	OP_IDIV,   // //
-	OP_NEG,	   // negate
-	OP_NOT,	   // !
-	OP_POW,	   // ^
-	OP_AND,	   // and
-	OP_OR,	   // or
-	OP_GE,	   // >=
-	OP_LE,	   // <=
-	OP_GT,	   // >
-	OP_LT,	   // <
-	OP_EQ,	   // ==
-	OP_CONCAT, // <>
+	OP_ADD,		 // +
+	OP_MUL,		 // *
+	OP_SUB,		 // -
+	OP_DIV,		 // /
+	OP_MOD,		 // %
+	OP_IDIV,	 // //
+	OP_NEG,		 // negate
+	OP_NOT,		 // !
+	OP_POW,		 // ^
+	OP_AND,		 // and
+	OP_OR,		 // or
+	OP_GE,		 // >=
+	OP_LE,		 // <=
+	OP_GT,		 // >
+	OP_LT,		 // <
+	OP_EQ,		 // ==
+	OP_CONCAT,	 // <>
 
-	OP_JMP,	 // jump <K>
-	OP_JMPF, // jump <K> if pop() false
+	OP_JMP,	   // jump <K>
+	OP_JMPF,   // jump <K> if pop() false
 
 	OP_SETLOCAL,
 	OP_SETGLOBAL,
 	OP_LOADLOCAL,
 	OP_LOADGLOBAL,
 
-	OP_CALL, // call function
+	OP_CALL,   // call function
 
 	OP_PRINT,
 	OP_RETURN,
 
 	OP_POP,
 
-	OP_WIDE, // extends next op args
+	OP_WIDE,   // extends next op args
 
 	OP_HALT,
 } OpCode;
@@ -82,38 +82,40 @@ static const char* opnames[] = {
 	[OP_CONCAT]		   = "CONCAT",
 	[OP_POP]		   = "POP",
 	[OP_WIDE]		   = "WIDE",
+	[OP_JMP]		   = "JMP",
+	[OP_JMPF]		   = "JMPF",
 };
 
 typedef enum
 {
 	// arithmetic
-	OPR_BADD,	 // a + b
-	OPR_BSUB,	 // a - b
-	OPR_BMUL,	 // a * b
-	OPR_BDIV,	 // a / b
-	OPR_BMOD,	 // a % b
-	OPR_BIDIV,	 // a // b
-	OPR_BPOW,	 // a ^ b
-	OPR_BCONCAT, // <>
+	OPR_BADD,	   // a + b
+	OPR_BSUB,	   // a - b
+	OPR_BMUL,	   // a * b
+	OPR_BDIV,	   // a / b
+	OPR_BMOD,	   // a % b
+	OPR_BIDIV,	   // a // b
+	OPR_BPOW,	   // a ^ b
+	OPR_BCONCAT,   // <>
 
 	// logical
-	OPR_BGE,  // a >= b
-	OPR_BLE,  // a <= b
-	OPR_BGT,  // a > b
-	OPR_BLT,  // a < b
-	OPR_BAND, // a and b
-	OPR_BOR,  // a or b
-	OPR_BEQ,  // ==
-	OPR_BNEQ, // !=
+	OPR_BGE,	// a >= b
+	OPR_BLE,	// a <= b
+	OPR_BGT,	// a > b
+	OPR_BLT,	// a < b
+	OPR_BAND,	// a and b
+	OPR_BOR,	// a or b
+	OPR_BEQ,	// ==
+	OPR_BNEQ,	// !=
 
 } BinOpr;
 
 typedef enum
 {
-	OPR_NEGATE, // -
-	OPR_NOT,	// !
-	OPR_INC,	// ++
-	OPR_DEC,	// --
+	OPR_NEGATE,	  // -
+	OPR_NOT,	  // !
+	OPR_INC,	  // ++
+	OPR_DEC,	  // --
 } UnOpr;
 
 BinOpr		getbinopr(int op);

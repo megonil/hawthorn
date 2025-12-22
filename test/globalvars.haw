@@ -13,6 +13,3 @@ abc2 = 10
 print abc == "somestring" \\ 1
 print abc2 \\ 10
 print abc * abc2
-
-
-

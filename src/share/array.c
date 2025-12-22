@@ -32,7 +32,8 @@ void* array_init(size_t item_size, size_t capacity)
 	return ptr;
 }
 
-void* array_ensure_capacity(void* array, size_t item_count, size_t item_size)
+void* array_ensure_capacity(void* array, size_t item_count,
+							size_t item_size)
 {
 	// get array header
 	ArrayHeader* header			 = array_header(array);
@@ -42,14 +43,16 @@ void* array_ensure_capacity(void* array, size_t item_count, size_t item_size)
 	// and reallocate
 	if (header->capacity < needed_capacity)
 	{
-		size_t new_capacity = header->capacity == 0 ? 8 : header->capacity * 2;
+		size_t new_capacity =
+			header->capacity == 0 ? 8 : header->capacity * 2;
 
 		while (new_capacity <= needed_capacity)
 		{
 			new_capacity *= 2;
 		}
 
-		header			 = realloc(header, sizeof(ArrayHeader) + new_capacity * item_size);
+		header			 = realloc(header,
+								   sizeof(ArrayHeader) + new_capacity * item_size);
 		header->capacity = new_capacity;
 	}
 
@@ -67,7 +70,8 @@ void* array_res(void* array, size_t n, size_t item_size)
 	ArrayHeader* header		  = array_header(array);
 	size_t		 new_capacity = header->capacity + n;
 
-	header = realloc(header, sizeof(ArrayHeader) + new_capacity * item_size);
+	header =
+		realloc(header, sizeof(ArrayHeader) + new_capacity * item_size);
 
 	if (header == NULL)
 	{
@@ -84,8 +88,8 @@ inline void* array_get(void* array, size_t index)
 {
 	if (index < 0 || index >= array_size(array))
 	{
-		errorf("Tried to get value with index %zu in array with size %zu", index,
-			   array_size(array));
+		errorf("Tried to get value with index %zu in array with size %zu",
+			   index, array_size(array));
 	}
 
 	return &array[index];

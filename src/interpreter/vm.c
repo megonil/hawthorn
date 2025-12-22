@@ -32,6 +32,8 @@ vm v;
 					  ((uint32_t) code[v.pc - 2] << 8) |                  \
 					  ((uint32_t) code[v.pc - 1] << 16))
 
+#define read_short() (v.pc += 2, ((code[v.pc - 2] << 8) | code[v.pc - 1]));
+
 #define read_wide()                                                       \
 	if (wide)                                                             \
 	{                                                                     \
@@ -84,6 +86,25 @@ void vm_execute()
 		{
 			wide = 1;
 			continue;
+		}
+
+		case OP_JMPF:
+		{
+			uint16_t offset = read_short();
+
+			if (!v_istruth(&v.stack[array_size(v.stack) - 1]))
+			{
+				v.pc += offset;
+			}
+
+			break;
+		}
+		case OP_JMP:
+		{
+			uint16_t offset = read_short();
+			v.pc += offset;
+
+			break;
 		}
 
 		case OP_CONSTANT:

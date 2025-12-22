@@ -60,7 +60,7 @@ static void constant_instruction(Chunk* chunk, int* offset)
 
 static void slot_instruction(Chunk* chunk, int* offset)
 {
-	printf("%04d %s %u\n", *offset, op_name(chunk->code[*offset]),
+	printf("%4d %s %u\n", *offset, op_name(chunk->code[*offset]),
 		   chunk->code[*offset + 1]);
 
 	*offset += 2;
@@ -72,7 +72,7 @@ static void constantlong_instruction(Chunk* chunk, int* offset)
 		from_u24(chunk->code[*offset + 1], chunk->code[*offset + 2],
 				 chunk->code[*offset + 3]);
 
-	printf("%04d %s %3u (", *offset, op_name(OP_CONSTANT_LONG), index);
+	printf("%4d %s %3u (", *offset, op_name(OP_CONSTANT_LONG), index);
 
 	if (index < array_size(chunk->constants))
 	{
@@ -118,6 +118,14 @@ static void onearg_instruction(Chunk* chunk, int* offset, int wide)
 	*offset += jump;
 }
 
+static void short_instruction(Chunk* chunk, int* offset)
+{
+	printf("%4d %s %u %u\n", *offset, op_name(chunk->code[*offset]),
+		   chunk->code[*offset + 1], chunk->code[*offset + 2]);
+
+	*offset += 3;
+}
+
 void disassemble(Chunk* chunk)
 {
 	printf("-- Bytecode\n");
@@ -152,6 +160,10 @@ void disassemble(Chunk* chunk)
 		case OP_SETLOCAL:
 		case OP_LOADLOCAL:
 			slot_instruction(chunk, &offset);
+			break;
+		case OP_JMP:
+		case OP_JMPF:
+			short_instruction(chunk, &offset);
 			break;
 		default:
 			simple_instruction(chunk->code[offset], &offset);
@@ -191,4 +203,24 @@ inline uint32_t write_constant(Chunk* chunk, Constant data)
 inline void chunk_clear(Chunk* chunk)
 {
 	array_size(chunk->code) = 0;
+}
+
+inline uint32_t emit_jump(Chunk* chunk, uint8_t jmp)
+{
+	emit_bytes(chunk, jmp, 0xFF, 0xFF);
+
+	return array_size(chunk->code) - 2;
+}
+
+inline void patch_jump(this, uint32_t offset)
+{
+	uint32_t jump = array_size(chunk->code) - offset - 2;
+
+	if (jump > UINT16_MAX)
+	{
+		error("Too much code to jump over.");
+	}
+
+	chunk->code[offset]		= (jump >> 8) & 0xff;
+	chunk->code[offset + 1] = jump & 0xff;
 }

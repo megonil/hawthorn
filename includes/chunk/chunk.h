@@ -25,19 +25,22 @@ typedef struct
 
 #define pass_chunk(c) (&c)
 
-void	 chunk_init(this);
-uint32_t raw_write_constant(Chunk* chunk, uint32_t index);
-uint32_t add_constant(Chunk* chunk, Constant data);
+void chunk_init(this);
+void chunk_destroy(this);
+void chunk_clear(this);
+
+uint32_t raw_write_constant(this, uint32_t index);
+uint32_t add_constant(this, Constant data);
 uint32_t write_constant(this, Constant data);
 uint32_t write_idxarg(this, uint32_t index);
+uint32_t emit_jump(this, uint8_t jmp);
 
 void emit_byte(this, hawu_byte byte);
+void patch_jump(this, uint32_t offset);
+void emit_some_bytes(this, ...);
+void disassemble(this);
 
 #define emit_bytes(c, ...) emit_some_bytes(c, __VA_ARGS__, -1)
-void emit_some_bytes(this, ...);
-void chunk_destroy(this);
-void disassemble(this);
-void chunk_clear(this);
 
 #define emit(v) (emit_byte(chunk, v))
 

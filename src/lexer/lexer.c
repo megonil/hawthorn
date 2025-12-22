@@ -107,8 +107,8 @@ static lexer_char is_reserved(const String* str, SemInfo* seminfo)
 				KW_CHECK_PART(1, "or", TK_FOR);
 				break;
 			case 'a':
-				KW_CHECK_PART(2, "lse", TK_BOOL);
 				seminfo->int_ = 0;
+				KW_CHECK_PART(2, "lse", TK_BOOL);
 				break;
 			}
 		}
@@ -145,8 +145,8 @@ static lexer_char is_reserved(const String* str, SemInfo* seminfo)
 			switch (s[1])
 			{
 			case 'r':
-				KW_CHECK_PART(2, "ue", TK_BOOL);
 				seminfo->int_ = 1;
+				KW_CHECK_PART(2, "ue", TK_BOOL);
 				break;
 			}
 		}

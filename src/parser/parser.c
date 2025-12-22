@@ -244,6 +244,7 @@ dstmt(stmt);
 dstmt(vardeclstat);
 dstmt(printstat);
 dstmt(scopestat);
+dstmt(ifstat);
 
 // Expressions
 #define dexpr(s) static void s(int can_assign)
@@ -270,7 +271,7 @@ static void prec(Precedence prec);
 static ParseRule rules[] = {
 	// operators
 	// arithmetic
-	rule('+', unary, binary, PREC_TERM),
+	rule('+', NULL, binary, PREC_TERM),
 	rule('-', unary, binary, PREC_TERM),
 	rule(TK_CONCAT, NULL, binary, PREC_TERM),
 
@@ -361,7 +362,6 @@ static void stmt()
 		// TODO
 	case TK_RETURN:
 	case TK_BREAK:
-	case TK_IF:
 	case TK_DO:
 	case TK_WHILE:
 	case TK_FOR:
@@ -371,6 +371,9 @@ static void stmt()
 
 	case TK_PRINT:
 		printstat();
+		break;
+	case TK_IF:
+		ifstat();
 		break;
 	case '{':
 		scopestat();
@@ -408,6 +411,29 @@ static void printstat()
 	next();
 	expr(0);
 	emit_byte(&p.chunk, OP_PRINT);
+}
+
+static void ifstat()
+{
+	next();	  // if
+
+	expr(1);
+
+	int then_jump = emit_jump(&p.chunk, OP_JMPF);
+	pop();
+
+	stmt();	  // then body
+
+	int else_jump = emit_jump(&p.chunk, OP_JMP);
+	patch_jump(&p.chunk, then_jump);
+	pop();
+
+	if (match(TK_ELSE))
+	{
+		stmt();
+	}
+
+	patch_jump(&p.chunk, else_jump);
 }
 
 #define scope_begin() pscopes.scopes_deep++
